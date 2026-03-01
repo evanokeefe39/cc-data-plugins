@@ -1,0 +1,17 @@
+{
+  "name": "cc-data-plugins",
+  "owner": {
+    "name": "Evan O"
+  },
+  "description": "Data extraction, management, governance, and analytics plugins for Claude Code.",
+  "plugins": [
+    {
+      "name": "apify",
+      "source": {
+        "source": "github",
+        "repo": "evano/cc-apify-plugin-v2"
+      },
+      "description": "Apify data extraction with cost guardrails, DuckDB state management, and user-adaptive workflows."
+    }
+  ]
+}
