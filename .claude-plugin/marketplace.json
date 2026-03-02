@@ -8,8 +8,8 @@
     {
       "name": "apify",
       "source": {
-        "source": "github",
-        "repo": "evanokeefe39/cc-apify-plugin-v2"
+        "source": "url",
+        "url": "https://github.com/evanokeefe39/cc-apify-plugin-v2.git"
       },
       "description": "Apify data extraction with cost guardrails, DuckDB state management, and user-adaptive workflows."
     }
