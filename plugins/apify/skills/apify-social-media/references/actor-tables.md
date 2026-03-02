@@ -1,5 +1,7 @@
 # Social Media Actor Reference Tables
 
+> **Cost data**: Never use hardcoded cost estimates. Always run `estimate_cost.py` to get real pricing from the Apify API or cached registry. The script handles cost lookup, caching, and target multipliers automatically.
+
 ## Instagram — `apify/instagram-scraper`
 
 ### Required Parameters
@@ -18,10 +20,8 @@
 
 ### Cost Model
 - **Proxy**: Residential (required by Instagram's anti-bot measures)
-- **Credits per 100 items**: ~1.5 (metadata only)
-- **Media download**: Additional cost — images ~0.01 credits each, videos ~0.05 each
+- **Pricing**: Use `estimate_cost.py` — costs are based on real historical runs
 - **Typical run time**: 2-5 minutes for 100 posts from a single profile
-- **Cost warning**: Residential proxies at ~12.5 credits/GB dominate cost for large runs
 
 ### Output Fields
 Key fields returned per post:
@@ -56,8 +56,7 @@ One of `profiles` or `hashtags` must be provided.
 
 ### Cost Model
 - **Proxy**: Residential (required)
-- **Credits per 100 items**: ~2.0 (metadata only)
-- **Video download**: ~0.1 credits per video (varies by length/quality)
+- **Pricing**: Use `estimate_cost.py` — costs are based on real historical runs
 - **Typical run time**: 3-8 minutes for 100 posts
 - **Cost warning**: Video downloads dramatically increase cost and time
 
@@ -96,9 +95,8 @@ One of `searchTerms` or `twitterHandles` must be provided.
 
 ### Cost Model
 - **Proxy**: Datacenter (sufficient for Twitter API)
-- **Credits per 100 items**: ~1.0
+- **Pricing**: Use `estimate_cost.py` — costs are based on real historical runs
 - **Typical run time**: 1-3 minutes for 100 tweets
-- **Cost note**: Twitter is the cheapest platform — datacenter proxies only ~0.5 credits/GB
 
 ### Output Fields
 Key fields returned per tweet:
@@ -128,7 +126,7 @@ Key fields returned per tweet:
 
 ### Cost Model
 - **Proxy**: Residential (recommended)
-- **Credits per 100 items**: ~2.0
+- **Pricing**: Use `estimate_cost.py` — costs are based on real historical runs
 - **Typical run time**: 3-10 minutes depending on content type
 - **Cost warning**: Comments mode `ALL` dramatically increases run time and cost
 

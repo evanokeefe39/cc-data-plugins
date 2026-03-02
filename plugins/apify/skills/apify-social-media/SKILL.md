@@ -24,7 +24,7 @@ For lifecycle rules (INIT → PLAN → EXECUTE → REPLAN), four-gate enforcemen
 4. Resolve all required parameters — ask the user for any missing inputs (profile URLs, hashtags, search terms)
 5. Set `maxItems` — never leave unbounded. Default to 100 unless the user specifies otherwise
 6. Check `_catalog` for known output fields for this actor. If known, summarize available fields so the user can make informed scope decisions
-7. Estimate cost using skill-embedded rough estimates (Plan Mode) or `estimate_cost.py` (Normal Mode)
+7. Estimate cost by running `estimate_cost.py` — never use hardcoded cost numbers
 8. Present the full execution plan for four-gate approval
 
 ## Social Media Specific Rules

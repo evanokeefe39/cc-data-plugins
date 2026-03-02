@@ -255,8 +255,10 @@ def refresh_registry(con: duckdb.DuckDBPyConnection, token: str) -> int:
     now = datetime.now(timezone.utc).isoformat()
 
     for actor_id in CORE_ACTORS:
+        # Slash notation → tilde for API URL paths
+        api_actor_id = actor_id.replace("/", "~")
         try:
-            resp = client.get(f"/acts/{actor_id}")
+            resp = client.get(f"/acts/{api_actor_id}")
             if resp.status_code != 200:
                 continue
 
@@ -265,7 +267,7 @@ def refresh_registry(con: duckdb.DuckDBPyConnection, token: str) -> int:
             # Extract input schema
             input_schema = {}
             try:
-                schema_resp = client.get(f"/acts/{actor_id}/input-schema")
+                schema_resp = client.get(f"/acts/{api_actor_id}/input-schema")
                 if schema_resp.status_code == 200:
                     input_schema = schema_resp.json().get("data", {})
             except Exception:
@@ -275,7 +277,7 @@ def refresh_registry(con: duckdb.DuckDBPyConnection, token: str) -> int:
             cost_per_100_usd = None
             cost_sample_runs = 0
             try:
-                runs_resp = client.get(f"/acts/{actor_id}/runs", params={"limit": 5, "desc": True})
+                runs_resp = client.get(f"/acts/{api_actor_id}/runs", params={"limit": 5, "desc": True})
                 if runs_resp.status_code == 200:
                     runs = runs_resp.json().get("data", {}).get("items", [])
                     cost_per_100_usd, cost_sample_runs = _calculate_cost_per_100(runs)

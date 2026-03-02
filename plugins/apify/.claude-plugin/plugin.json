@@ -1,5 +1,5 @@
 {
-  "name": "apify-plugin",
+  "name": "apify",
   "version": "0.1.0",
   "description": "Apify data extraction with cost guardrails, DuckDB state management, session recovery, and user-adaptive workflows.",
   "author": {

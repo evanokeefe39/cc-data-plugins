@@ -151,6 +151,10 @@ def dispatch(plan: dict):
 
         try:
             # Dispatch to Apify
+            # Actor IDs use slash notation (apify/instagram-scraper) but the
+            # REST API needs tilde (apify~instagram-scraper) in URL paths.
+            api_actor_id = actor_id.replace("/", "~")
+
             params = {}
             if timeout_secs:
                 params["timeout"] = timeout_secs
@@ -158,7 +162,7 @@ def dispatch(plan: dict):
                 params["build"] = build
 
             resp = client.post(
-                f"/acts/{actor_id}/runs",
+                f"/acts/{api_actor_id}/runs",
                 json=input_params,
                 params=params,
             )

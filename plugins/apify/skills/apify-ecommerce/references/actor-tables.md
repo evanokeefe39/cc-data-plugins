@@ -1,5 +1,7 @@
 # E-Commerce Actor Reference Tables
 
+> **Cost data**: Never use hardcoded cost estimates. Always run `estimate_cost.py` to get real pricing from the Apify API or cached registry. The script handles cost lookup, caching, and target multipliers automatically.
+
 ## Amazon — `junglee/amazon-crawler`
 
 ### Required Parameters
@@ -21,7 +23,7 @@ One of `keyword` or `asins` must be provided.
 
 ### Cost Model
 - **Proxy**: Residential (required for Amazon)
-- **Credits per 100 items**: ~3.0
+- **Pricing**: Use `estimate_cost.py` — costs are based on real historical runs
 - **Rental**: May require monthly subscription ($10-$150/month) — CHECK FIRST
 - **Typical run time**: 5-15 minutes for 100 products
 - **Cost warning**: Amazon is the most expensive platform. Reviews dramatically increase run time
@@ -52,7 +54,7 @@ One of `keyword` or `asins` must be provided.
 
 ### Cost Model
 - **Proxy**: Residential (recommended)
-- **Credits per 100 items**: ~2.0
+- **Pricing**: Use `estimate_cost.py` — costs are based on real historical runs
 - **No rental required**
 - **Typical run time**: 3-8 minutes for 100 products
 
@@ -76,7 +78,7 @@ One of `keyword` or `asins` must be provided.
 
 ### Cost Model
 - **Proxy**: Datacenter (Shopify stores don't typically block)
-- **Credits per 100 items**: ~1.5
+- **Pricing**: Use `estimate_cost.py` — costs are based on real historical runs
 - **No rental required**
 - **Typical run time**: 2-5 minutes for 100 products
 
@@ -99,7 +101,7 @@ One of `keyword` or `asins` must be provided.
 
 ### Cost Model
 - **Proxy**: Residential (recommended for unknown sites)
-- **Credits per 100 items**: ~2.5
+- **Pricing**: Use `estimate_cost.py` — costs are based on real historical runs
 - **Typical run time**: 5-15 minutes (varies significantly)
 - **Use as fallback only** — platform-specific actors are more reliable
 

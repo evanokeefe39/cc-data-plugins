@@ -3,7 +3,17 @@
 import os
 from pathlib import Path
 
-PROJECT_DIR = Path(os.environ.get("CLAUDE_PROJECT_DIR", Path.cwd()))
+
+def _resolve_project_dir() -> Path:
+    """Resolve project directory with multiple fallbacks."""
+    # Prefer explicit env var
+    if env_dir := os.environ.get("CLAUDE_PROJECT_DIR"):
+        return Path(env_dir)
+    # Fall back to cwd — works when scripts are invoked from the project root
+    return Path.cwd()
+
+
+PROJECT_DIR = _resolve_project_dir()
 
 
 def get_apify_token() -> str | None:

@@ -31,6 +31,40 @@ All four must pass. No exceptions. Enforced by three layers: skill instructions 
 3. **Scope Decided** — `metadata_only`, `with_media`, or `with_transcripts`
 4. **Destination Set** — `local_duckdb`, `local_files`, `remote`, or `decide_later`
 
+### Plan JSON format
+
+The plan MUST use this exact structure. Write it to a `.json` file, then pass via `--plan <file>`.
+
+```json
+{
+  "session_id": "abc-123",
+  "user_request": "Get 50 Instagram posts from @natgeo",
+  "jobs": [
+    {
+      "actor_id": "apify/instagram-scraper",
+      "input": {
+        "directUrls": ["https://www.instagram.com/natgeo/"],
+        "resultsType": "posts",
+        "resultsLimit": 50
+      }
+    }
+  ],
+  "cost_approval": {
+    "approved": true,
+    "estimated_cost": 0.12,
+    "timestamp": "2025-01-15T10:30:00Z"
+  },
+  "scope": "metadata_only",
+  "destination": "local_duckdb"
+}
+```
+
+Key rules:
+- `jobs` is a **required array** — never put `actor_id` at the top level
+- Each job needs `actor_id`, `input` with an item limit key, and optionally `timeout_secs`/`build`
+- `cost_approval` must have `approved: true` and `timestamp` (ISO-8601)
+- Actor IDs use **slash notation** (`apify/instagram-scraper`) — the dispatch script auto-converts to tilde for API calls
+
 ## Data Handling Rules
 
 - Data NEVER passes through the LLM context window — scripts stream to files, import to DuckDB

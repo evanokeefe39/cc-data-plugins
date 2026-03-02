@@ -1,5 +1,7 @@
 # Maps & Places Actor Reference Tables
 
+> **Cost data**: Never use hardcoded cost estimates. Always run `estimate_cost.py` to get real pricing from the Apify API or cached registry. The script handles cost lookup, caching, and target multipliers automatically.
+
 ## Google Places Listings — `compass/crawler-google-places`
 
 ### Required Parameters
@@ -20,8 +22,7 @@
 
 ### Cost Model
 - **Proxy**: Datacenter (sufficient for Google Maps)
-- **Credits per 100 places**: ~2.0
-- **Adding reviews**: +1.0 credits per 100 reviews
+- **Pricing**: Use `estimate_cost.py` — costs are based on real historical runs
 - **Typical run time**: 3-10 minutes for 100 listings
 
 ### Output Fields
@@ -52,7 +53,7 @@
 
 ### Cost Model
 - **Proxy**: Datacenter
-- **Credits per 100 reviews**: ~1.5
+- **Pricing**: Use `estimate_cost.py` — costs are based on real historical runs
 - **Typical run time**: 2-5 minutes per place
 
 ### Output Fields

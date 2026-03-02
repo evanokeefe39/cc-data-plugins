@@ -6,21 +6,23 @@
 # ]
 # ///
 """
-Cost estimation script — queries Apify API for exact cost estimates.
+Cost estimation script — queries Apify API for real cost data.
 
-Three-tier estimation (in priority order):
-1. Live API — query /acts/{id}/runs for recent cost data
+Two-tier estimation (in priority order):
+1. Live API — query /acts/{id}/runs for recent cost-per-item from real runs
 2. Cached registry — read cost_per_100_usd from _actor_registry in DuckDB
-3. Hardcoded fallback — last resort, may be inaccurate
 
-Used in Normal Mode (not Plan Mode, where skill-embedded tables provide rough estimates).
-Estimates compute cost, proxy cost, and any rental fees.
+No hardcoded fallbacks. If real data is unavailable, the estimate reports
+"unknown" so the user can decide whether to proceed.
+
+When Tier 1 succeeds, results are cached back to _actor_registry for future use.
 """
 
 import argparse
 import json
 import os
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 import duckdb
@@ -32,96 +34,115 @@ PROJECT_DIR = Path(os.environ.get("CLAUDE_PROJECT_DIR", Path.cwd()))
 DATA_DIR = PROJECT_DIR / ".apify_plugin" / "data"
 DB_PATH = DATA_DIR / "datasets.duckdb"
 
-# Rough cost multipliers when API data is unavailable (last resort)
-FALLBACK_COSTS = {
-    # actor_id_prefix -> USD per 100 items (rough)
-    "apify/instagram": 1.5,
-    "clockworks/tiktok": 2.0,
-    "apidojo/tweet": 1.0,
-    "apify/facebook": 2.0,
-    "junglee/amazon": 3.0,
-    "piotrv1001/walmart": 2.0,
-    "autofacts/shopify": 1.5,
-    "apify/e-commerce": 2.5,
-    "compass/crawler-google": 2.0,
-    "compass/Google-Maps": 1.5,
-}
-
-# Proxy costs per GB
-PROXY_COSTS = {
-    "residential": 12.5,  # credits per GB
-    "datacenter": 0.5,    # credits per GB
-}
-
-# Actors known to require residential proxies
-RESIDENTIAL_PROXY_ACTORS = {
-    "apify/instagram-scraper",
-    "clockworks/tiktok-scraper",
-    "apify/facebook-posts-scraper",
-    "junglee/amazon-crawler",
-    "piotrv1001/walmart-listings-scraper",
-}
-
 
 def get_apify_token() -> str:
     from _token import get_apify_token as _get
     token = _get()
     if not token:
-        print(json.dumps({"error": "No APIFY_TOKEN set. Using fallback estimates only."}))
+        print(json.dumps({"error": "No APIFY_TOKEN set. Cannot fetch live pricing."}),
+              file=sys.stderr)
     return token or ""
 
 
-def get_fallback_cost(actor_id: str) -> float:
-    """Get rough cost per 100 items from hardcoded fallback table."""
-    for prefix, cost in FALLBACK_COSTS.items():
-        if actor_id.lower().startswith(prefix.lower()):
-            return cost
-    return 2.0  # default fallback
-
-
-def get_cached_registry_cost(actor_id: str) -> tuple[float | None, str | None]:
+def get_cached_registry_cost(actor_id: str) -> tuple[float | None, str | None, int]:
     """Get cost_per_100_usd from _actor_registry in DuckDB.
 
-    Returns (cost_per_100_usd, refreshed_at_str) or (None, None) if unavailable.
+    Returns (cost_per_100_usd, refreshed_at_str, sample_runs) or (None, None, 0).
     """
     if not DB_PATH.exists():
-        return None, None
+        return None, None, 0
     try:
         con = duckdb.connect(str(DB_PATH), read_only=True)
         result = con.execute(
-            "SELECT cost_per_100_usd, refreshed_at FROM _actor_registry WHERE actor_id = ?",
+            "SELECT cost_per_100_usd, refreshed_at, cost_sample_runs FROM _actor_registry WHERE actor_id = ?",
             [actor_id],
         ).fetchone()
         con.close()
         if result and result[0] is not None:
             refreshed_at = str(result[1]).split("T")[0] if result[1] else "unknown"
-            return result[0], refreshed_at
+            sample_runs = result[2] or 0
+            return result[0], refreshed_at, sample_runs
     except Exception:
         pass
-    return None, None
+    return None, None, 0
 
 
-def get_cached_proxy_type(actor_id: str) -> str | None:
-    """Get proxy_type from _actor_registry in DuckDB."""
+def cache_cost_to_registry(actor_id: str, cost_per_100: float, sample_runs: int):
+    """Write live cost data back to _actor_registry for future lookups."""
     if not DB_PATH.exists():
-        return None
+        return
     try:
-        con = duckdb.connect(str(DB_PATH), read_only=True)
-        result = con.execute(
-            "SELECT proxy_type FROM _actor_registry WHERE actor_id = ?",
-            [actor_id],
-        ).fetchone()
+        con = duckdb.connect(str(DB_PATH))
+        now = datetime.now(timezone.utc).isoformat()
+        con.execute("""
+            UPDATE _actor_registry
+            SET cost_per_100_usd = ?, cost_sample_runs = ?, refreshed_at = ?
+            WHERE actor_id = ?
+        """, [cost_per_100, sample_runs, now, actor_id])
         con.close()
-        if result and result[0]:
-            return result[0]
     except Exception:
         pass
-    return None
 
 
-def estimate_job(actor_id: str, input_params: dict, scope: str, token: str) -> dict:
-    """Estimate cost for a single job using three-tier pricing."""
-    max_items = (
+def _count_input_targets(input_params: dict) -> int:
+    """Count number of profiles/URLs/search terms in input params."""
+    for key in ("profiles", "directUrls", "startUrls", "twitterHandles",
+                "searchTerms", "hashtags", "urls", "queries"):
+        val = input_params.get(key)
+        if isinstance(val, list) and len(val) > 0:
+            return len(val)
+    return 1
+
+
+def _fetch_live_cost(actor_id: str, token: str, client: httpx.Client) -> tuple[float | None, int, dict | None]:
+    """Fetch cost per 100 items from recent Apify runs.
+
+    Returns (cost_per_100_usd, sample_count, rental_warning_or_none).
+    """
+    api_actor_id = actor_id.replace("/", "~")
+    cost_per_100 = None
+    sample_count = 0
+    rental_warning = None
+
+    try:
+        resp = client.get(f"/acts/{api_actor_id}/runs", params={"limit": 10, "desc": True})
+        if resp.status_code == 200:
+            runs = resp.json().get("data", {}).get("items", [])
+            costs = []
+            for run in runs:
+                usage_usd = run.get("usageTotalUsd")
+                items = run.get("stats", {}).get("itemsCount", 0)
+                if usage_usd and items and items > 0:
+                    costs.append((usage_usd, items))
+
+            if costs:
+                total_cost = sum(c[0] for c in costs)
+                total_items = sum(c[1] for c in costs)
+                if total_items > 0:
+                    cost_per_100 = round((total_cost / total_items) * 100, 4)
+                    sample_count = len(costs)
+
+        # Check for rental pricing
+        resp = client.get(f"/acts/{api_actor_id}")
+        if resp.status_code == 200:
+            actor_data = resp.json().get("data", {})
+            pricing = actor_data.get("pricing", {})
+            if pricing.get("pricingModel") == "FLAT_PRICE_PER_MONTH":
+                rental_warning = {
+                    "monthly_cost_usd": pricing.get("pricePerUnitUsd", 0),
+                    "message": f"This actor requires a monthly rental of ${pricing.get('pricePerUnitUsd', '?')}/month",
+                }
+
+    except Exception:
+        pass
+
+    return cost_per_100, sample_count, rental_warning
+
+
+def estimate_job(actor_id: str, input_params: dict, scope: str, token: str,
+                 client: httpx.Client | None) -> dict:
+    """Estimate cost for a single job using real pricing data only."""
+    items_per_target = (
         input_params.get("maxItems") or
         input_params.get("resultsLimit") or
         input_params.get("resultsPerPage") or
@@ -129,106 +150,77 @@ def estimate_job(actor_id: str, input_params: dict, scope: str, token: str) -> d
         100
     )
 
+    target_count = _count_input_targets(input_params)
+    max_items = items_per_target * target_count
+
     estimate = {
         "actor_id": actor_id,
+        "target_count": target_count,
+        "items_per_target": items_per_target,
         "max_items": max_items,
         "scope": scope,
         "breakdown": {},
     }
 
-    # Three-tier cost resolution
+    # Two-tier cost resolution — no hardcoded fallback
     cost_per_100 = None
     source = None
+    sample_runs = 0
 
     # Tier 1: Live API
-    if token:
-        client = httpx.Client(
-            base_url=APIFY_API_BASE,
-            headers={"Authorization": f"Bearer {token}"},
-            timeout=15,
-        )
-        try:
-            resp = client.get(f"/acts/{actor_id}/runs", params={"limit": 5, "desc": True})
-            if resp.status_code == 200:
-                runs = resp.json().get("data", {}).get("items", [])
-                if runs:
-                    costs = []
-                    for run in runs:
-                        usage_usd = run.get("usageTotalUsd")
-                        items = run.get("stats", {}).get("itemsCount", 0)
-                        if usage_usd and items and items > 0:
-                            costs.append((usage_usd, items))
-
-                    if costs:
-                        total_cost = sum(c[0] for c in costs)
-                        total_items = sum(c[1] for c in costs)
-                        if total_items > 0:
-                            cost_per_100 = (total_cost / total_items) * 100
-                            source = "historical_runs"
-
-            # Check for rental pricing
-            resp = client.get(f"/acts/{actor_id}")
-            if resp.status_code == 200:
-                actor_data = resp.json().get("data", {})
-                pricing = actor_data.get("pricing", {})
-                if pricing.get("pricingModel") == "FLAT_PRICE_PER_MONTH":
-                    estimate["rental_warning"] = {
-                        "monthly_cost_usd": pricing.get("pricePerUnitUsd", 0),
-                        "message": f"This actor requires a monthly rental of ${pricing.get('pricePerUnitUsd', '?')}/month",
-                    }
-
-        except Exception:
-            pass
-        finally:
-            client.close()
+    if token and client:
+        cost_per_100, sample_runs, rental_warning = _fetch_live_cost(actor_id, token, client)
+        if cost_per_100 is not None:
+            source = "live_api"
+            estimate["sample_runs"] = sample_runs
+            # Cache for future use
+            cache_cost_to_registry(actor_id, cost_per_100, sample_runs)
+        if rental_warning:
+            estimate["rental_warning"] = rental_warning
 
     # Tier 2: Cached registry
     if cost_per_100 is None:
-        cached_cost, refreshed_at = get_cached_registry_cost(actor_id)
+        cached_cost, refreshed_at, cached_samples = get_cached_registry_cost(actor_id)
         if cached_cost is not None:
             cost_per_100 = cached_cost
             source = "cached_registry"
-            estimate["is_fallback"] = True
-            estimate["fallback_note"] = (
-                f"* Couldn't fetch latest prices. Using last known costs as at {refreshed_at}."
+            sample_runs = cached_samples
+            estimate["sample_runs"] = cached_samples
+            estimate["cache_note"] = (
+                f"Using cached cost data from {refreshed_at} ({cached_samples} sample runs)."
             )
 
-    # Tier 3: Hardcoded fallback
+    # No data available — report unknown
     if cost_per_100 is None:
-        cost_per_100 = get_fallback_cost(actor_id)
-        source = "fallback_table"
-        estimate["is_fallback"] = True
-        estimate["fallback_note"] = (
-            "* Couldn't fetch latest prices. Using hardcoded estimates (may be inaccurate)."
+        estimate["source"] = "none"
+        estimate["cost_unknown"] = True
+        estimate["error"] = (
+            f"No cost data available for {actor_id}. "
+            "Run this actor at least once, or ensure the actor registry has been refreshed "
+            "(session_start.py --force-refresh)."
         )
+        estimate["total_usd"] = None
+        estimate["estimated_time_minutes"] = max(1, int(max_items / 50))
+        return estimate
 
     estimate["source"] = source
+    estimate["cost_per_100_usd"] = cost_per_100
 
-    # Calculate compute cost (cost_per_100 is now in USD)
+    # Calculate cost (all-in USD — proxy already included in per-result pricing)
     compute_usd = (max_items / 100) * cost_per_100
     estimate["breakdown"]["compute_usd"] = round(compute_usd, 4)
 
-    # Proxy cost estimate
-    cached_proxy = get_cached_proxy_type(actor_id)
-    proxy_type = cached_proxy or ("residential" if actor_id in RESIDENTIAL_PROXY_ACTORS else "datacenter")
-    # Rough: ~1 MB per 100 items for metadata, ~50 MB for media
-    mb_per_100 = 1 if scope == "metadata_only" else 50
-    proxy_gb = (max_items / 100) * mb_per_100 / 1024
-    proxy_credits = proxy_gb * PROXY_COSTS[proxy_type]
-    estimate["breakdown"]["proxy"] = round(proxy_credits, 2)
-    estimate["breakdown"]["proxy_type"] = proxy_type
-
     # Media download cost (if scope includes media)
     if scope in ("with_media", "with_transcripts"):
-        media_credits = (max_items / 100) * 5  # rough: 5 credits per 100 media items
-        estimate["breakdown"]["media_download"] = round(media_credits, 2)
+        media_usd = (max_items / 100) * 1.0  # ~$1.00 per 100 media items
+        estimate["breakdown"]["media_download_usd"] = round(media_usd, 2)
     else:
-        estimate["breakdown"]["media_download"] = 0
+        estimate["breakdown"]["media_download_usd"] = 0
 
     # Total
     total = sum(v for k, v in estimate["breakdown"].items() if isinstance(v, (int, float)))
-    estimate["total_credits"] = round(total, 2)
-    estimate["estimated_time_minutes"] = max(1, int(max_items / 50))  # rough: 50 items/minute
+    estimate["total_usd"] = round(total, 2)
+    estimate["estimated_time_minutes"] = max(1, int(max_items / 50))
 
     return estimate
 
@@ -247,6 +239,15 @@ def main():
     token = get_apify_token()
     scope = plan.get("scope", "metadata_only")
 
+    # Create shared HTTP client for all jobs
+    client = None
+    if token:
+        client = httpx.Client(
+            base_url=APIFY_API_BASE,
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=15,
+        )
+
     estimates = []
     for job in plan.get("jobs", []):
         est = estimate_job(
@@ -254,32 +255,58 @@ def main():
             input_params=job.get("input", {}),
             scope=scope,
             token=token,
+            client=client,
         )
         estimates.append(est)
 
-    total_credits = sum(e["total_credits"] for e in estimates)
-    total_time = sum(e["estimated_time_minutes"] for e in estimates)
+    if client:
+        client.close()
 
-    has_fallbacks = any(e.get("is_fallback") for e in estimates)
+    # Check for unknown costs
+    unknown_jobs = [e for e in estimates if e.get("cost_unknown")]
+    known_jobs = [e for e in estimates if not e.get("cost_unknown")]
+
+    total_usd = sum(e["total_usd"] for e in known_jobs) if known_jobs else None
+    total_time = sum(e["estimated_time_minutes"] for e in estimates)
 
     output = {
         "jobs": estimates,
         "summary": {
-            "total_credits": round(total_credits, 2),
+            "total_usd": round(total_usd, 2) if total_usd is not None else None,
             "estimated_time_minutes": total_time,
             "job_count": len(estimates),
             "scope": scope,
         },
-        "approval_prompt": (
-            f"Estimated cost: ~{total_credits:.1f} credits across {len(estimates)} job(s). "
+    }
+
+    if unknown_jobs:
+        output["summary"]["unknown_cost_jobs"] = len(unknown_jobs)
+        output["summary"]["warning"] = (
+            f"{len(unknown_jobs)} job(s) have no cost data. "
+            "Run session_start.py --force-refresh to populate the actor registry, "
+            "or run a small test job first."
+        )
+
+    if total_usd is not None and not unknown_jobs:
+        output["approval_prompt"] = (
+            f"Estimated cost: ~${total_usd:.2f} USD across {len(estimates)} job(s). "
             f"Estimated time: ~{total_time} minutes. "
             f"Scope: {scope}. "
             "Approve this plan?"
-        ),
-    }
-
-    if has_fallbacks:
-        output["summary"]["has_fallbacks"] = True
+        )
+    elif total_usd is not None and unknown_jobs:
+        output["approval_prompt"] = (
+            f"Partial estimate: ~${total_usd:.2f} USD for {len(known_jobs)} job(s) "
+            f"({len(unknown_jobs)} job(s) have unknown cost). "
+            f"Estimated time: ~{total_time} minutes. "
+            f"Scope: {scope}. "
+            "Approve this plan?"
+        )
+    else:
+        output["approval_prompt"] = (
+            f"Cannot estimate cost — no pricing data for any job. "
+            "Run session_start.py --force-refresh to populate the actor registry."
+        )
 
     # Add rental warnings if any
     rentals = [e for e in estimates if "rental_warning" in e]
