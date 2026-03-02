@@ -7,10 +7,7 @@
   "plugins": [
     {
       "name": "apify",
-      "source": {
-        "source": "url",
-        "url": "https://github.com/evanokeefe39/cc-apify-plugin-v2.git"
-      },
+      "source": "./plugins/apify",
       "description": "Apify data extraction with cost guardrails, DuckDB state management, and user-adaptive workflows."
     }
   ]

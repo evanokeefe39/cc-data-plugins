@@ -1,0 +1,8 @@
+.apify_plugin/
+testing/
+.claude/plugins/apify-plugin/config.json
+.claude/plugins/apify-plugin/actor_registry.json
+.claude/*.local.md
+__pycache__/
+*.pyc
+.env
