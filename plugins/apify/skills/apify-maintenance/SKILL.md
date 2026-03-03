@@ -3,9 +3,9 @@ name: apify-maintenance
 description: >-
   This skill should be used when the user asks to "check storage costs", "clean up Apify data",
   "check account health", "review spending", "delete old datasets", "check my Apify usage",
-  "how much am I spending", "how many credits left", "check my credits", "billing report",
+  "how much am I spending", "how much balance left", "check my balance", "billing report",
   "storage cleanup", "consumption report", "purge old data", or mentions
-  Apify storage, costs, credits, spending, cleanup, or account maintenance.
+  Apify storage, costs, spending, cleanup, or account maintenance.
   Do NOT use for data extraction — use the domain-specific skills instead.
 version: 0.1.0
 ---
@@ -24,11 +24,11 @@ uv run $CLAUDE_PLUGIN_ROOTscripts/check_account_health.py
 ```
 
 This script checks:
-1. **Credit balance** — current credits remaining, burn rate
+1. **Account balance** — current USD balance remaining, burn rate
 2. **Storage usage** — datasets, KV stores, request queues
 3. **Stale datasets** — datasets older than 7 days still on Apify (accumulating storage costs)
 4. **KV store costs** — GB-hours for any media files still stored on Apify
-5. **Recent spending** — last 7 days of credit consumption by actor
+5. **Recent spending** — last 7 days of USD consumption by actor
 
 ### Output Format
 
@@ -37,17 +37,17 @@ Adapts to user profile:
 **Non-technical:**
 ```
 Your Apify account summary:
-- Credits remaining: 42.5 (about 2 weeks at current pace)
-- Storage: 3 old datasets still on Apify, costing ~0.2 credits/day
+- Balance remaining: $42.50 (about 2 weeks at current pace)
+- Storage: 3 old datasets still on Apify, costing ~$0.20/day
 - Recommendation: Download and delete 2 video datasets to save costs
 ```
 
 **Technical:**
 ```
-Credits: 42.5 remaining | 7d burn: 18.3 | projected runway: 16d
-Storage: 3 datasets (2.1 GB), 1 KV store (450 MB @ 0.08 credits/GB-hr)
+Balance: $42.50 remaining | 7d burn: $18.30 | projected runway: 16d
+Storage: 3 datasets (2.1 GB), 1 KV store (450 MB @ $0.08/GB-hr)
 Stale: dataset_abc123 (12d, 1.8 GB), dataset_def456 (8d, 300 MB)
-Action: Recommend purging stale datasets (-0.2 credits/day)
+Action: Recommend purging stale datasets (-$0.20/day)
 ```
 
 ## Cost Tracking
@@ -85,17 +85,42 @@ KV stores accumulate GB-hour charges for media files (images, videos):
 ## Spending Trends
 
 Run `uv run $CLAUDE_PLUGIN_ROOTscripts/check_account_health.py --section spending` or query `_diagnostics` directly to show:
-- Credits consumed per day/week/month
+- USD consumed per day/week/month
 - Breakdown by actor (which actors cost the most)
 - Breakdown by platform (Instagram vs. TikTok vs. Amazon)
-- Cost efficiency: credits per 100 items by actor
+- Cost efficiency: $/1000 results by actor (from `estimate_cost.py`)
 - Trend direction: spending increasing, decreasing, or stable
+
+## Examples
+
+### Example 1: Routine health check
+
+User says: "How's my Apify account looking?"
+
+Actions:
+1. Run `uv run scripts/check_account_health.py --section all`
+2. Script returns: balance $42.50, 3 stale datasets (2.1 GB), 7-day burn $18.30
+3. Present summary adapted to user profile (technical vs. non-technical)
+4. Recommend: "You have 3 old datasets still on Apify costing ~$0.20/day. Want me to list them for cleanup?"
+
+Result: User gets clear picture of account status with actionable recommendations
+
+### Example 2: Cost accuracy review
+
+User says: "Are my cost estimates accurate?"
+
+Actions:
+1. Run `uv run scripts/query_dataset.py sql "SELECT actor_id, AVG(estimated_cost), AVG(actual_cost) FROM _diagnostics GROUP BY actor_id"`
+2. Compare estimated vs. actual per actor
+3. Present: "Instagram estimates are 15% low on average. TikTok video downloads cost 3x more than metadata-only runs."
+
+Result: User understands cost trends, can adjust future planning
 
 ## Maintenance Checklist
 
 Present as a periodic health review:
 
-- [ ] Credit balance sufficient for planned work
+- [ ] Account balance sufficient for planned work
 - [ ] No stale datasets accumulating storage costs
 - [ ] No orphaned KV stores from media downloads
 - [ ] Actor registry up to date (< 24h old)

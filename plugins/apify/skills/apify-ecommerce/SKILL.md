@@ -24,16 +24,19 @@ For lifecycle rules, four-gate enforcement, data handling rules, and script refe
 4. **Check for actor rental requirements** — some e-commerce actors (e.g., `junglee/amazon-crawler`) require a monthly subscription. Warn the user before proceeding
 5. Resolve all required parameters — product URLs, search queries, category pages
 6. Set `maxItems` — default to 100. E-commerce scrapes can be large; enforce bounds
-7. Estimate cost and present the four-gate execution plan
+7. **Estimate cost** — STOP and run `estimate_cost.py --plan <plan.json>` before presenting costs to the user. Never write cost numbers (USD or otherwise) without script output. If the script returns `cost_unknown`, tell the user no cost data is available yet
+8. Present the full execution plan for four-gate approval — cost numbers in the plan MUST come from step 7's script output
 
 ### Actor Selection
 
-| Platform | Actor ID | Required Params | Credits/100 | Notes |
-|----------|----------|-----------------|-------------|-------|
-| Amazon | `junglee/amazon-crawler` | `keyword` or `asins` | ~3.0 | May require rental ($10-150/mo) |
-| Walmart | `piotrv1001/walmart-listings-scraper` | `searchTerms` | ~2.0 | |
-| Shopify | `autofacts/shopify` | `startUrls` | ~1.5 | Works on any Shopify store |
-| General | `apify/e-commerce-scraping-tool` | `startUrls` | ~2.5 | Fallback only — less reliable |
+| Platform | Actor ID | Required Params | Notes |
+|----------|----------|-----------------|-------|
+| Amazon | `junglee/amazon-crawler` | `keyword` or `asins` | May require rental ($10-150/mo) |
+| Walmart | `piotrv1001/walmart-listings-scraper` | `searchTerms` | |
+| Shopify | `autofacts/shopify` | `startUrls` | Works on any Shopify store |
+| General | `apify/e-commerce-scraping-tool` | `startUrls` | Fallback only — less reliable |
+
+**Costs**: You MUST run `estimate_cost.py --plan <file>` to get real USD pricing. Never write cost numbers without running the script first. Never use the term "credits".
 
 For complete parameters, cost models, and platform notes, consult `references/actor-tables.md`.
 
@@ -58,6 +61,35 @@ After download and import (see `../shared/plugin-rules.md` for execution steps):
 - Check for empty price fields, missing images, duplicate ASINs
 - Flag `isSponsored` products in search results
 - Note currency in results (marketplace-local)
+
+## Examples
+
+### Example 1: Search Amazon for products
+
+User says: "Find the top 50 wireless earbuds on Amazon"
+
+Actions:
+1. Check existing data: `uv run scripts/query_dataset.py sql "SELECT * FROM landed_data WHERE source LIKE '%amazon%'"`
+2. No local data — select `junglee/amazon-crawler` with `keyword: "wireless earbuds"`, `maxItems: 50`
+3. Check for rental requirement via Apify API — actor requires rental, warn user
+4. User confirms rental is active
+5. Write plan JSON, run `uv run scripts/estimate_cost.py --plan /tmp/plan.json` — returns `{"total_usd": 0.25, "source": "live_api"}`
+6. Present plan: "50 Amazon results for 'wireless earbuds', ~$0.25 USD, metadata only. Approve?"
+7. User approves → dispatch
+
+Result: 50 product listings in DuckDB with prices, ratings, ASINs
+
+### Example 2: Scrape a Shopify store
+
+User says: "Get all products from example-store.myshopify.com"
+
+Actions:
+1. Select `autofacts/shopify` with `startUrls: ["https://example-store.myshopify.com"]`, `maxItems: 100`
+2. Run `estimate_cost.py` — returns `{"total_usd": 0.12, "source": "cached_registry"}`
+3. Present plan with cost from script
+4. Dispatch after approval
+
+Result: Product catalog imported, queryable by price/category
 
 ## Error Handling
 

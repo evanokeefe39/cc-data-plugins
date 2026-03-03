@@ -22,6 +22,15 @@ Every data extraction request follows four phases:
 3. **EXECUTE** — After all four gates pass. Dispatch jobs, download data, import to DuckDB, validate.
 4. **REPLAN** — User follow-up after execution. Check existing data FIRST before proposing a new scrape.
 
+## Cost Estimation — Hard Rule
+
+**NEVER invent, guess, or hallucinate cost numbers.** The ONLY way to get cost data is by running `estimate_cost.py`. This script queries the Apify API for real historical run data and returns costs in **USD** (not "credits", not "units", not any other term). If you cannot run the script, say "I need to run the cost estimation script" — never fill in placeholder numbers.
+
+Prohibited patterns:
+- "~2 credits" / "~$0.50" / "roughly X" — any cost number not from the script
+- The word "credits" — Apify bills in USD per compute usage, not credits
+- Presenting a cost table before running `estimate_cost.py`
+
 ## Four Gates (mandatory before any dispatch)
 
 All four must pass. No exceptions. Enforced by three layers: skill instructions (soft), PreToolUse hook (hard), script validation (hard).
@@ -106,15 +115,22 @@ Read the user's profile from the project CLAUDE.md (between `APIFY-PLUGIN:START`
 - **Tech Stack** — informs data format recommendations
 - **Previous Actors Used** — helps with actor selection and schema lookups
 
-## API Token
+## Authentication Setup
 
-When `session_start.py` returns `"status": "setup_required"`, the Apify API token is missing. Guide the user:
-1. Sign up at https://apify.com/sign-up if needed (free tier available)
-2. Get API token from https://console.apify.com/account/integrations
-3. Save to project `.env` file: `APIFY_TOKEN=apify_api_XXXXX`
-4. Add `.env` to `.gitignore`
-5. Restart the Claude Code session
+The plugin uses two auth mechanisms:
+
+### 1. Apify MCP Server (OAuth)
+The MCP server (`@apify/actors-mcp-server`) uses browser-based OAuth sign-in. It should prompt automatically on first use. This gives Claude access to Apify's actor store and search.
+
+### 2. API Token (REST API)
+The plugin scripts need a REST API token for dispatching jobs, downloading data, estimating costs, and checking account health.
+
+When `session_start.py` returns `"status": "setup_required"`, guide the user:
+1. Authenticate the MCP server first (OAuth prompt should appear automatically)
+2. Sign up at https://apify.com/sign-up if needed (free tier available)
+3. Get API token from https://console.apify.com/account/integrations
+4. Save to project `.env` file: `APIFY_TOKEN=apify_api_XXXXX`
+5. Add `.env` to `.gitignore`
+6. Restart the Claude Code session
 
 Never ask the user to paste their token into chat. Direct them to `.env` or shell environment only.
-
-Note: The Apify MCP server uses separate OAuth (browser sign-in) and works independently of this token.

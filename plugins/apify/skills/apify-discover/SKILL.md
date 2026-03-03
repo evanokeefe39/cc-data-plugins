@@ -50,7 +50,7 @@ Before recommending an actor, assess:
 Present findings to the user:
 1. Recommended actor with rationale
 2. Required parameters (from actor docs)
-3. Rough cost estimate (based on similar actors if exact pricing unknown)
+3. Cost estimate from `estimate_cost.py` (if script returns `cost_unknown` for a new actor, tell the user — never guess)
 4. Any warnings (community-maintained, infrequent updates, rental required)
 5. Alternative actors if available
 
@@ -58,7 +58,7 @@ Present findings to the user:
 
 After a successful run with a newly discovered actor, UPSERT into the `_actor_registry` table in DuckDB with:
 - Actor ID, required/optional params, default maxItems
-- Proxy type, cost per 100 items (from actual run)
+- Proxy type, $/1000 results (from actual run via `estimate_cost.py`)
 - Output fields (from `_catalog` after import)
 
 This ensures future runs skip discovery and go straight to planning.
@@ -76,6 +76,36 @@ This ensures future runs skip discovery and go straight to planning.
 | Any website | `apify/website-content-crawler` | Fallback for structured extraction |
 
 These are starting points — always verify actor availability and current status via the Apify store.
+
+## Examples
+
+### Example 1: User wants Reddit data
+
+User says: "Can Apify scrape Reddit posts?"
+
+Actions:
+1. Check local registry: `uv run scripts/session_start.py --check-registry reddit`
+2. Registry has `trudax/reddit-scraper` — present actor with known params
+3. User says "Get top 50 posts from r/technology"
+4. Write plan with `searchTerms: ["r/technology"]`, `maxItems: 50`
+5. Run `uv run scripts/estimate_cost.py --plan /tmp/plan.json` — returns `{"total_usd": 0.10, "source": "cached_registry"}`
+6. Present plan with cost from script, get approval, dispatch
+
+Result: 50 Reddit posts imported to DuckDB
+
+### Example 2: Unknown platform — no cost data
+
+User says: "Is there an Apify actor for Glassdoor reviews?"
+
+Actions:
+1. Check local registry — no match
+2. Search Apify MCP store for "glassdoor reviews"
+3. Find `misceres/glassdoor-scraper` — community actor, 500 runs, 3.8 stars, updated 2 months ago
+4. Run `estimate_cost.py` — returns `{"cost_unknown": true, "error": "No cost data available..."}`
+5. Present: "Found a community actor for Glassdoor. No cost data yet — suggest a small test run of 10 items first to establish pricing."
+6. User agrees → dispatch small test, then register actor for future use
+
+Result: Actor tested, cost data cached, ready for larger runs
 
 ## Important Caveats
 
