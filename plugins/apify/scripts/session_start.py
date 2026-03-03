@@ -161,7 +161,7 @@ def init_duckdb_schema(con: duckdb.DuckDBPyConnection):
             total_runs INTEGER,
             last_run_at TIMESTAMP,
             input_schema JSON,
-            cost_per_100_usd DOUBLE,
+            cost_per_1000_usd DOUBLE,
             cost_sample_runs INTEGER,
             proxy_type VARCHAR,
             pricing_model VARCHAR,
@@ -216,10 +216,10 @@ CORE_ACTORS = [
 ]
 
 
-def _calculate_cost_per_100(runs: list[dict]) -> tuple[float | None, int]:
-    """Calculate cost per 100 items from recent successful runs.
+def _calculate_cost_per_1000(runs: list[dict]) -> tuple[float | None, int]:
+    """Calculate cost per 1000 results from recent successful runs.
 
-    Returns (cost_per_100_usd, sample_count). cost is None if no usable data.
+    Returns (cost_per_1000_usd, sample_count). cost is None if no usable data.
     """
     costs = []
     for run in runs:
@@ -236,8 +236,8 @@ def _calculate_cost_per_100(runs: list[dict]) -> tuple[float | None, int]:
     if total_items == 0:
         return None, 0
 
-    cost_per_100 = (total_cost / total_items) * 100
-    return round(cost_per_100, 4), len(costs)
+    cost_per_1000 = (total_cost / total_items) * 1000
+    return round(cost_per_1000, 4), len(costs)
 
 
 def refresh_registry(con: duckdb.DuckDBPyConnection, token: str) -> int:
@@ -274,13 +274,13 @@ def refresh_registry(con: duckdb.DuckDBPyConnection, token: str) -> int:
                 pass
 
             # Fetch recent runs for pricing data
-            cost_per_100_usd = None
+            cost_per_1000_usd = None
             cost_sample_runs = 0
             try:
                 runs_resp = client.get(f"/acts/{api_actor_id}/runs", params={"limit": 5, "desc": True})
                 if runs_resp.status_code == 200:
                     runs = runs_resp.json().get("data", {}).get("items", [])
-                    cost_per_100_usd, cost_sample_runs = _calculate_cost_per_100(runs)
+                    cost_per_1000_usd, cost_sample_runs = _calculate_cost_per_1000(runs)
             except Exception:
                 pass
 
@@ -300,14 +300,14 @@ def refresh_registry(con: duckdb.DuckDBPyConnection, token: str) -> int:
             con.execute("""
                 INSERT INTO _actor_registry (
                     actor_id, name, title, description, total_runs, last_run_at,
-                    input_schema, cost_per_100_usd, cost_sample_runs,
+                    input_schema, cost_per_1000_usd, cost_sample_runs,
                     proxy_type, pricing_model, refreshed_at
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT (actor_id) DO UPDATE SET
                     name = EXCLUDED.name, title = EXCLUDED.title,
                     description = EXCLUDED.description, total_runs = EXCLUDED.total_runs,
                     last_run_at = EXCLUDED.last_run_at, input_schema = EXCLUDED.input_schema,
-                    cost_per_100_usd = EXCLUDED.cost_per_100_usd,
+                    cost_per_1000_usd = EXCLUDED.cost_per_1000_usd,
                     cost_sample_runs = EXCLUDED.cost_sample_runs,
                     proxy_type = EXCLUDED.proxy_type, pricing_model = EXCLUDED.pricing_model,
                     refreshed_at = EXCLUDED.refreshed_at
@@ -319,7 +319,7 @@ def refresh_registry(con: duckdb.DuckDBPyConnection, token: str) -> int:
                 data.get("stats", {}).get("totalRuns", 0),
                 data.get("stats", {}).get("lastRunStartedAt"),
                 json.dumps(schema_summary),
-                cost_per_100_usd,
+                cost_per_1000_usd,
                 cost_sample_runs,
                 proxy_type,
                 pricing_model,
@@ -505,7 +505,7 @@ def main():
         query = args.check_registry.lower()
         rows = con.execute("""
             SELECT actor_id, name, title, description, total_runs, last_run_at,
-                   input_schema, cost_per_100_usd, cost_sample_runs, proxy_type,
+                   input_schema, cost_per_1000_usd, cost_sample_runs, proxy_type,
                    pricing_model, refreshed_at
             FROM _actor_registry
             WHERE LOWER(actor_id) LIKE ? OR LOWER(name) LIKE ?
@@ -518,7 +518,7 @@ def main():
                 "description": row[3], "total_runs": row[4],
                 "last_run_at": str(row[5]) if row[5] else None,
                 "input_schema": json.loads(row[6]) if row[6] else {},
-                "cost_per_100_usd": row[7], "cost_sample_runs": row[8],
+                "cost_per_1000_usd": row[7], "cost_sample_runs": row[8],
                 "proxy_type": row[9], "pricing_model": row[10],
                 "refreshed_at": str(row[11]) if row[11] else None,
             })
@@ -546,20 +546,21 @@ def main():
                 f"{PROJECT_DIR / '.env'} file",
             ],
             "setup_instructions": {
-                "step_1": "Go to https://console.apify.com/account/integrations",
-                "step_2": "Copy your Personal API token (or create one if you don't have an Apify account — free tier available at https://apify.com/sign-up)",
-                "step_3_option_a": {
+                "step_1": "Authenticate the Apify MCP server — the OAuth prompt should appear automatically. This gives Claude access to the Apify actor store.",
+                "step_2": "Sign up at https://apify.com/sign-up if needed (free tier available)",
+                "step_3": "Go to https://console.apify.com/account/integrations and copy your Personal API token",
+                "step_4_option_a": {
                     "method": "Project .env file (recommended)",
                     "action": f"Create a .env file at {PROJECT_DIR / '.env'} with the line: APIFY_TOKEN=apify_api_XXXXX",
                     "note": "Make sure .env is in your .gitignore",
                 },
-                "step_3_option_b": {
+                "step_4_option_b": {
                     "method": "Shell environment variable",
                     "action": "Add to your shell profile (~/.bashrc, ~/.zshrc, etc.): export APIFY_TOKEN=apify_api_XXXXX",
                 },
-                "step_4": "Restart this Claude Code session after setting the token.",
+                "step_5": "Restart this Claude Code session after setting the token.",
             },
-            "note": "The Apify MCP server uses OAuth (browser sign-in) and works without a token. But the plugin scripts need a token for REST API operations like dispatching jobs and downloading data.",
+            "note": "The Apify MCP server uses OAuth (browser sign-in) for actor discovery. The REST API token is needed separately for plugin scripts (dispatching jobs, downloading data, cost estimation).",
         }
         output["_instruction"] = (
             "IMPORTANT: The Apify API token is not configured. "

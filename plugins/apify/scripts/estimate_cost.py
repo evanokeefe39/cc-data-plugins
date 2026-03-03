@@ -10,12 +10,14 @@ Cost estimation script — queries Apify API for real cost data.
 
 Two-tier estimation (in priority order):
 1. Live API — query /acts/{id}/runs for recent cost-per-item from real runs
-2. Cached registry — read cost_per_100_usd from _actor_registry in DuckDB
+2. Cached registry — read cost_per_1000_usd from _actor_registry in DuckDB
 
 No hardcoded fallbacks. If real data is unavailable, the estimate reports
 "unknown" so the user can decide whether to proceed.
 
 When Tier 1 succeeds, results are cached back to _actor_registry for future use.
+
+Note: Apify quotes costs as $/1000 results. All internal calculations use this unit.
 """
 
 import argparse
@@ -44,41 +46,57 @@ def get_apify_token() -> str:
     return token or ""
 
 
-def get_cached_registry_cost(actor_id: str) -> tuple[float | None, str | None, int]:
-    """Get cost_per_100_usd from _actor_registry in DuckDB.
+def _get_cost_column(con: duckdb.DuckDBPyConnection) -> tuple[str, float]:
+    """Detect whether DB uses new cost_per_1000_usd or legacy cost_per_100_usd column.
 
-    Returns (cost_per_100_usd, refreshed_at_str, sample_runs) or (None, None, 0).
+    Returns (column_name, multiplier_to_per_1000).
+    """
+    cols = [row[1] for row in con.execute("PRAGMA table_info('_actor_registry')").fetchall()]
+    if "cost_per_1000_usd" in cols:
+        return "cost_per_1000_usd", 1.0
+    return "cost_per_100_usd", 10.0
+
+
+def get_cached_registry_cost(actor_id: str) -> tuple[float | None, str | None, int]:
+    """Get cost_per_1000_usd from _actor_registry in DuckDB.
+
+    Returns (cost_per_1000_usd, refreshed_at_str, sample_runs) or (None, None, 0).
+    Falls back to reading legacy cost_per_100_usd column and converting.
     """
     if not DB_PATH.exists():
         return None, None, 0
     try:
         con = duckdb.connect(str(DB_PATH), read_only=True)
+        col, multiplier = _get_cost_column(con)
         result = con.execute(
-            "SELECT cost_per_100_usd, refreshed_at, cost_sample_runs FROM _actor_registry WHERE actor_id = ?",
+            f"SELECT {col}, refreshed_at, cost_sample_runs FROM _actor_registry WHERE actor_id = ?",
             [actor_id],
         ).fetchone()
         con.close()
         if result and result[0] is not None:
             refreshed_at = str(result[1]).split("T")[0] if result[1] else "unknown"
             sample_runs = result[2] or 0
-            return result[0], refreshed_at, sample_runs
+            return result[0] * multiplier, refreshed_at, sample_runs
     except Exception:
         pass
     return None, None, 0
 
 
-def cache_cost_to_registry(actor_id: str, cost_per_100: float, sample_runs: int):
+def cache_cost_to_registry(actor_id: str, cost_per_1000: float, sample_runs: int):
     """Write live cost data back to _actor_registry for future lookups."""
     if not DB_PATH.exists():
         return
     try:
         con = duckdb.connect(str(DB_PATH))
         now = datetime.now(timezone.utc).isoformat()
-        con.execute("""
+        col, multiplier = _get_cost_column(con)
+        # Store in whichever column exists (convert back if legacy)
+        store_value = cost_per_1000 / multiplier
+        con.execute(f"""
             UPDATE _actor_registry
-            SET cost_per_100_usd = ?, cost_sample_runs = ?, refreshed_at = ?
+            SET {col} = ?, cost_sample_runs = ?, refreshed_at = ?
             WHERE actor_id = ?
-        """, [cost_per_100, sample_runs, now, actor_id])
+        """, [store_value, sample_runs, now, actor_id])
         con.close()
     except Exception:
         pass
@@ -95,12 +113,12 @@ def _count_input_targets(input_params: dict) -> int:
 
 
 def _fetch_live_cost(actor_id: str, token: str, client: httpx.Client) -> tuple[float | None, int, dict | None]:
-    """Fetch cost per 100 items from recent Apify runs.
+    """Fetch cost per 1000 results from recent Apify runs.
 
-    Returns (cost_per_100_usd, sample_count, rental_warning_or_none).
+    Returns (cost_per_1000_usd, sample_count, rental_warning_or_none).
     """
     api_actor_id = actor_id.replace("/", "~")
-    cost_per_100 = None
+    cost_per_1000 = None
     sample_count = 0
     rental_warning = None
 
@@ -119,7 +137,7 @@ def _fetch_live_cost(actor_id: str, token: str, client: httpx.Client) -> tuple[f
                 total_cost = sum(c[0] for c in costs)
                 total_items = sum(c[1] for c in costs)
                 if total_items > 0:
-                    cost_per_100 = round((total_cost / total_items) * 100, 4)
+                    cost_per_1000 = round((total_cost / total_items) * 1000, 4)
                     sample_count = len(costs)
 
         # Check for rental pricing
@@ -136,7 +154,7 @@ def _fetch_live_cost(actor_id: str, token: str, client: httpx.Client) -> tuple[f
     except Exception:
         pass
 
-    return cost_per_100, sample_count, rental_warning
+    return cost_per_1000, sample_count, rental_warning
 
 
 def estimate_job(actor_id: str, input_params: dict, scope: str, token: str,
@@ -163,26 +181,26 @@ def estimate_job(actor_id: str, input_params: dict, scope: str, token: str,
     }
 
     # Two-tier cost resolution — no hardcoded fallback
-    cost_per_100 = None
+    cost_per_1000 = None
     source = None
     sample_runs = 0
 
     # Tier 1: Live API
     if token and client:
-        cost_per_100, sample_runs, rental_warning = _fetch_live_cost(actor_id, token, client)
-        if cost_per_100 is not None:
+        cost_per_1000, sample_runs, rental_warning = _fetch_live_cost(actor_id, token, client)
+        if cost_per_1000 is not None:
             source = "live_api"
             estimate["sample_runs"] = sample_runs
             # Cache for future use
-            cache_cost_to_registry(actor_id, cost_per_100, sample_runs)
+            cache_cost_to_registry(actor_id, cost_per_1000, sample_runs)
         if rental_warning:
             estimate["rental_warning"] = rental_warning
 
     # Tier 2: Cached registry
-    if cost_per_100 is None:
+    if cost_per_1000 is None:
         cached_cost, refreshed_at, cached_samples = get_cached_registry_cost(actor_id)
         if cached_cost is not None:
-            cost_per_100 = cached_cost
+            cost_per_1000 = cached_cost
             source = "cached_registry"
             sample_runs = cached_samples
             estimate["sample_runs"] = cached_samples
@@ -191,7 +209,7 @@ def estimate_job(actor_id: str, input_params: dict, scope: str, token: str,
             )
 
     # No data available — report unknown
-    if cost_per_100 is None:
+    if cost_per_1000 is None:
         estimate["source"] = "none"
         estimate["cost_unknown"] = True
         estimate["error"] = (
@@ -204,15 +222,15 @@ def estimate_job(actor_id: str, input_params: dict, scope: str, token: str,
         return estimate
 
     estimate["source"] = source
-    estimate["cost_per_100_usd"] = cost_per_100
+    estimate["cost_per_1000_usd"] = cost_per_1000
 
     # Calculate cost (all-in USD — proxy already included in per-result pricing)
-    compute_usd = (max_items / 100) * cost_per_100
+    compute_usd = (max_items / 1000) * cost_per_1000
     estimate["breakdown"]["compute_usd"] = round(compute_usd, 4)
 
     # Media download cost (if scope includes media)
     if scope in ("with_media", "with_transcripts"):
-        media_usd = (max_items / 100) * 1.0  # ~$1.00 per 100 media items
+        media_usd = (max_items / 1000) * 10.0  # ~$10.00 per 1000 media items
         estimate["breakdown"]["media_download_usd"] = round(media_usd, 2)
     else:
         estimate["breakdown"]["media_download_usd"] = 0

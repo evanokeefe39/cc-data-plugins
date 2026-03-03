@@ -9,11 +9,11 @@
 Account health check — storage costs, spending trends, stale datasets.
 
 Checks:
-1. Credit balance and burn rate
+1. Account balance (USD) and burn rate
 2. Storage usage (datasets, KV stores)
 3. Stale datasets still on Apify
 4. Cost accuracy (estimated vs actual from _diagnostics)
-5. Recent spending by actor
+5. Recent spending (USD) by actor
 """
 
 import argparse
@@ -43,7 +43,7 @@ def get_apify_token() -> str:
 
 
 def check_account_info(client: httpx.Client) -> dict:
-    """Get account info including credit balance."""
+    """Get account info including USD balance."""
     try:
         resp = client.get("/v2/users/me")
         if resp.status_code == 200:
@@ -52,9 +52,9 @@ def check_account_info(client: httpx.Client) -> dict:
             return {
                 "username": data.get("username"),
                 "plan": plan.get("id", "unknown"),
-                "credits_remaining": plan.get("usageCreditsRemaining"),
-                "credits_limit": plan.get("monthlyUsageCreditsLimit"),
-                "credits_used_this_period": plan.get("usageCreditsUsedThisPeriod"),
+                "balance_remaining_usd": plan.get("usageCreditsRemaining"),
+                "monthly_limit_usd": plan.get("monthlyUsageCreditsLimit"),
+                "used_this_period_usd": plan.get("usageCreditsUsedThisPeriod"),
             }
     except Exception as e:
         return {"error": str(e)}
@@ -283,10 +283,10 @@ def main():
             )
 
     if "account" in report:
-        remaining = report["account"].get("credits_remaining")
+        remaining = report["account"].get("balance_remaining_usd")
         if remaining is not None and remaining < 10:
             recommendations.append(
-                f"Low credit balance ({remaining} credits remaining). Consider upgrading plan."
+                f"Low account balance (${remaining:.2f} remaining). Consider upgrading plan."
             )
 
     if "diagnostics" in report:

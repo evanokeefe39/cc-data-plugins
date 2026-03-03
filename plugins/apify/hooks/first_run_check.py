@@ -71,14 +71,22 @@ def main():
 
     # Priority 1: Token setup (blocks everything else)
     if not token_found:
+        env_path = PROJECT_DIR / ".env"
         print(
             "STOP. The Apify API token is not configured. Do NOT ask profile questions or proceed with any scraping.\n"
-            "Walk the user through setting up their token:\n"
-            "1. Go to https://console.apify.com/account/integrations\n"
-            "2. Copy their Personal API token (free account at https://apify.com/sign-up if needed)\n"
-            "3. Create a .env file in the project root with: APIFY_TOKEN=apify_api_XXXXX\n"
-            "4. Make sure .env is in .gitignore\n"
-            "5. Restart this Claude Code session after setting the token.\n"
+            "Walk the user through these setup steps:\n\n"
+            "Step 1 — Authenticate the Apify MCP server:\n"
+            "  The Apify MCP server should prompt for OAuth sign-in automatically.\n"
+            "  If it hasn't, ask the user to approve the MCP connection when prompted.\n"
+            "  This gives Claude access to Apify's actor store and search.\n\n"
+            "Step 2 — Get an API token for the plugin scripts:\n"
+            "  The plugin scripts (cost estimation, job dispatch, data download) need a REST API token.\n"
+            "  1. Go to https://console.apify.com/account/integrations\n"
+            "     (sign up at https://apify.com/sign-up if needed — free tier available)\n"
+            "  2. Copy the Personal API token\n"
+            f"  3. Create or edit {env_path} and add: APIFY_TOKEN=apify_api_XXXXX\n"
+            "  4. Make sure .env is in .gitignore\n"
+            "  5. Restart this Claude Code session after setting the token.\n\n"
             "Tell the user you'll ask a couple quick setup questions after the token is configured."
         )
         return
