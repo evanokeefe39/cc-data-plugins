@@ -1,12 +1,15 @@
 ---
 name: apify-maps
 description: >-
-  This skill should be used when the user asks to "scrape Google Maps", "get business listings",
-  "extract place reviews", "find businesses near", "get restaurant data", "scrape local businesses",
-  "extract Google Places data", "get reviews for a business", "scrape business contact info",
-  "extract ratings and reviews", "find coffee shops in [city]",
-  or mentions Google Maps, business listings, place reviews, or local business data extraction.
-  Do NOT use for mapping, visualization, or route planning — only for extracting business and review data via Apify.
+  This skill should be used when the user mentions Google Maps, local businesses, places,
+  or reviews and needs data from those platforms — whether the goal is extraction, analysis,
+  competitive research, or location scouting. Trigger words include "scrape Google Maps",
+  "get business listings", "extract place reviews", "find businesses near",
+  "get restaurant data", "scrape local businesses", "extract Google Places data",
+  "get reviews for a business", "scrape business contact info", "extract ratings and reviews",
+  "find coffee shops in [city]", "compare restaurants", "analyze reviews".
+  Use this skill even when the user's end goal is analysis or visualization — data must be
+  extracted first, and this skill handles that extraction step.
 version: 0.1.0
 compatibility: "Requires Python 3.11+, uv, and Apify MCP server (@apify/actors-mcp-server)"
 metadata:

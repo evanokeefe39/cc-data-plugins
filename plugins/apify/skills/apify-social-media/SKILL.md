@@ -1,12 +1,15 @@
 ---
 name: apify-social-media
 description: >-
-  This skill should be used when the user asks to "scrape Instagram", "get TikTok posts",
+  This skill should be used when the user mentions Instagram, TikTok, Twitter/X, or Facebook
+  and needs data from those platforms — whether the goal is extraction, analysis, trends,
+  monitoring, research, or comparison. Trigger words include "scrape Instagram", "get TikTok posts",
   "extract Twitter data", "download Facebook posts", "get social media profiles",
   "scrape followers", "get engagement metrics", "download reels", "scrape hashtags",
-  "scrape comments", "get replies", "scrape social media data",
-  or mentions Instagram, TikTok, Twitter/X, or Facebook in the context of data extraction.
-  Do NOT use for analyzing or visualizing social data — only for extracting it from platforms via Apify.
+  "scrape comments", "get replies", "scrape social media data", "find trends on Instagram",
+  "monitor TikTok", "track hashtags", "identify trends across", "social media data".
+  Use this skill even when the user's end goal is analysis or visualization — data must be
+  extracted first, and this skill handles that extraction step.
 version: 0.1.0
 compatibility: "Requires Python 3.11+, uv, and Apify MCP server (@apify/actors-mcp-server)"
 metadata:

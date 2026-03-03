@@ -1,12 +1,15 @@
 ---
 name: apify-ecommerce
 description: >-
-  This skill should be used when the user asks to "scrape Amazon", "get product data",
-  "extract prices", "scrape Shopify store", "get product reviews", "scrape product pages",
-  "scrape Walmart", "extract e-commerce data", "get product listings", "crawl e-commerce site",
-  "extract product catalog", "ASIN lookup", or mentions Amazon, Shopify, Walmart,
-  or product/price/review extraction in the context of data collection.
-  Do NOT use for product analysis, price optimization, comparison, or visualization — only for extracting raw product data via Apify.
+  This skill should be used when the user mentions Amazon, Shopify, Walmart, or e-commerce
+  platforms and needs product data — whether the goal is extraction, price comparison,
+  competitive analysis, monitoring, or research. Trigger words include "scrape Amazon",
+  "get product data", "extract prices", "scrape Shopify store", "get product reviews",
+  "scrape product pages", "scrape Walmart", "extract e-commerce data", "get product listings",
+  "crawl e-commerce site", "extract product catalog", "ASIN lookup", "compare prices",
+  "track product prices", "monitor competitors".
+  Use this skill even when the user's end goal is analysis or comparison — data must be
+  extracted first, and this skill handles that extraction step.
 version: 0.1.0
 compatibility: "Requires Python 3.11+, uv, and Apify MCP server (@apify/actors-mcp-server)"
 metadata:
