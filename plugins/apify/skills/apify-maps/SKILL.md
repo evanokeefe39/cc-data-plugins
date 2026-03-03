@@ -90,6 +90,8 @@ For user profile handling, auth setup, and full lifecycle details, see `../share
 
 ## Planning Flow
 
+**Do NOT use the Apify MCP "Search Actors" tool.** All maps actors are already mapped below — go directly to actor selection and the four-gate flow. The MCP search is only for the `apify-discover` skill when handling unknown platforms.
+
 1. Determine what the user needs: business listings, reviews, or both
 2. Select the correct actor:
    - **Business listings/discovery** → `compass/crawler-google-places`

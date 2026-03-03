@@ -90,9 +90,11 @@ For user profile handling, auth setup, and full lifecycle details, see `../share
 
 ## Planning Flow
 
+**Do NOT use the Apify MCP "Search Actors" tool.** All social media actors are already mapped in the Actor Quick Reference below — go directly to actor selection and the four-gate flow. The MCP search is only for the `apify-discover` skill when handling unknown platforms.
+
 1. Check existing data first — run `uv run "$CLAUDE_PLUGIN_ROOT/scripts/query_dataset.py" sql "SELECT * FROM landed_data"` to check for relevant data already downloaded. If local data answers the question, query it directly — no scrape needed
 2. Identify the target platform and content type from the user's request
-3. Select the correct actor from the actor table (see `references/actor-tables.md`)
+3. Select the correct actor from the Actor Quick Reference table below — do NOT search the Apify store
 4. Resolve all required parameters — ask the user for any missing inputs (profile URLs, hashtags, search terms)
 5. Set `maxItems` — never leave unbounded. Default to 100 unless the user specifies otherwise
 6. Check `_catalog` for known output fields for this actor. If known, summarize available fields so the user can make informed scope decisions

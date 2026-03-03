@@ -89,9 +89,11 @@ For user profile handling, auth setup, and full lifecycle details, see `../share
 
 ## Planning Flow
 
+**Do NOT use the Apify MCP "Search Actors" tool.** All e-commerce actors are already mapped in the Actor Selection table below — go directly to actor selection and the four-gate flow. The MCP search is only for the `apify-discover` skill when handling unknown platforms.
+
 1. Check existing data first — run `uv run "$CLAUDE_PLUGIN_ROOT/scripts/query_dataset.py" sql "SELECT * FROM landed_data"` before proposing a new scrape
 2. Identify the target platform and data type (products, reviews, prices, search results)
-3. Select the correct actor from the actor table (see `references/actor-tables.md`)
+3. Select the correct actor from the Actor Selection table below — do NOT search the Apify store
 4. **Check for actor rental requirements** — some e-commerce actors (e.g., `junglee/amazon-crawler`) require a monthly subscription. Warn the user before proceeding
 5. Resolve all required parameters — product URLs, search queries, category pages
 6. Set `maxItems` — default to 100. E-commerce scrapes can be large; enforce bounds
