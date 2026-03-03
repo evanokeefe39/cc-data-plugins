@@ -91,6 +91,7 @@ def get_apify_token() -> str | None:
 def ensure_dirs():
     """Create required directories."""
     DATA_DIR.mkdir(parents=True, exist_ok=True)
+    (PROJECT_DIR / ".apify-plugin" / "plans").mkdir(parents=True, exist_ok=True)
 
 
 

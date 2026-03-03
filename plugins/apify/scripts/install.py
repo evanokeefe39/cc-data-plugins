@@ -117,6 +117,10 @@ def main():
 
     if args.action == "install":
         result = install_snippet(project_dir, args.force)
+        # Create required plugin directories so the main agent never needs mkdir
+        for subdir in ("data", "plans"):
+            (project_dir / ".apify-plugin" / subdir).mkdir(parents=True, exist_ok=True)
+        result["directories_created"] = [".apify-plugin/data", ".apify-plugin/plans"]
     else:
         result = uninstall_snippet(project_dir)
 
