@@ -12,6 +12,7 @@ for Claude to ask setup questions before handling the user's request. Runs on
 every user message but exits silently once config exists (near-zero overhead).
 """
 
+import json
 import os
 import sys
 from pathlib import Path
@@ -22,7 +23,17 @@ import duckdb
 sys.path.insert(0, str(Path(os.environ.get("CLAUDE_PLUGIN_ROOT", Path(__file__).parent.parent)) / "scripts"))
 from _log import log
 
-PROJECT_DIR = Path(os.environ.get("CLAUDE_PROJECT_DIR", Path.cwd()))
+def _resolve_project_dir() -> Path:
+    env = os.environ.get("CLAUDE_PROJECT_DIR")
+    if env:
+        return Path(env)
+    cwd = Path.cwd()
+    if (cwd / ".apify_plugin").exists():
+        return cwd
+    print(json.dumps({"error": "CLAUDE_PROJECT_DIR not set and .apify_plugin/ not found in cwd", "cwd": str(cwd)}), file=sys.stderr)
+    sys.exit(1)
+
+PROJECT_DIR = _resolve_project_dir()
 DATA_DIR = PROJECT_DIR / ".apify_plugin" / "data"
 DB_PATH = DATA_DIR / "datasets.duckdb"
 

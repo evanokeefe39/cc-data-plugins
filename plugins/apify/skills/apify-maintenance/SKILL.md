@@ -20,7 +20,7 @@ Monitor Apify account health, track spending, manage storage costs, and clean up
 
 ## CRITICAL: Packaged Scripts Only
 
-NEVER write inline Python, ad-hoc DuckDB queries, or custom Bash. ALWAYS use `uv run scripts/<script>`. These are pre-authorized — inline code triggers permission prompts and breaks the flow.
+NEVER write inline Python, ad-hoc DuckDB queries, or custom Bash. ALWAYS use `uv run "$CLAUDE_PLUGIN_ROOT/scripts/<script>"`. These are pre-authorized — inline code triggers permission prompts and breaks the flow.
 
 ## Four Gates (mandatory before any dispatch)
 
@@ -62,7 +62,7 @@ For user profile handling, auth setup, and full lifecycle details, see `../share
 
 Run the account health check:
 ```
-uv run $CLAUDE_PLUGIN_ROOTscripts/check_account_health.py
+uv run "$CLAUDE_PLUGIN_ROOT/scripts/check_account_health.py"
 ```
 
 This script checks:
@@ -111,7 +111,7 @@ Over time, this builds a cost accuracy model. Surface trends:
 
 ### Stale Dataset Cleanup
 
-1. Query DuckDB: `uv run $CLAUDE_PLUGIN_ROOTscripts/query_dataset.py sql "SELECT * FROM landed_data"`
+1. Query DuckDB: `uv run "$CLAUDE_PLUGIN_ROOT/scripts/query_dataset.py" sql "SELECT * FROM landed_data"`
 2. Cross-reference with Apify storage to find datasets downloaded locally AND still on Apify
 3. Present list to user with sizes and daily storage costs
 4. **Never auto-delete** — always ask for confirmation
@@ -120,13 +120,13 @@ Over time, this builds a cost accuracy model. Surface trends:
 ### KV Store Cleanup
 
 KV stores accumulate GB-hour charges for media files (images, videos):
-1. Run `uv run $CLAUDE_PLUGIN_ROOTscripts/check_account_health.py --section storage` to list KV stores
+1. Run `uv run "$CLAUDE_PLUGIN_ROOT/scripts/check_account_health.py" --section storage` to list KV stores
 2. For stores where media has been downloaded locally: recommend deletion
 3. Warn about stores growing over time if jobs are still writing to them
 
 ## Spending Trends
 
-Run `uv run $CLAUDE_PLUGIN_ROOTscripts/check_account_health.py --section spending` or query `_diagnostics` directly to show:
+Run `uv run "$CLAUDE_PLUGIN_ROOT/scripts/check_account_health.py" --section spending` or query `_diagnostics` directly to show:
 - USD consumed per day/week/month
 - Breakdown by actor (which actors cost the most)
 - Breakdown by platform (Instagram vs. TikTok vs. Amazon)
@@ -140,7 +140,7 @@ Run `uv run $CLAUDE_PLUGIN_ROOTscripts/check_account_health.py --section spendin
 User says: "How's my Apify account looking?"
 
 Actions:
-1. Run `uv run scripts/check_account_health.py --section all`
+1. Run `uv run "$CLAUDE_PLUGIN_ROOT/scripts/check_account_health.py" --section all`
 2. Script returns: balance $42.50, 3 stale datasets (2.1 GB), 7-day burn $18.30
 3. Present summary adapted to user profile (technical vs. non-technical)
 4. Recommend: "You have 3 old datasets still on Apify costing ~$0.20/day. Want me to list them for cleanup?"
@@ -152,7 +152,7 @@ Result: User gets clear picture of account status with actionable recommendation
 User says: "Are my cost estimates accurate?"
 
 Actions:
-1. Run `uv run scripts/query_dataset.py sql "SELECT actor_id, AVG(estimated_cost), AVG(actual_cost) FROM _diagnostics GROUP BY actor_id"`
+1. Run `uv run "$CLAUDE_PLUGIN_ROOT/scripts/query_dataset.py" sql "SELECT actor_id, AVG(estimated_cost), AVG(actual_cost) FROM _diagnostics GROUP BY actor_id"`
 2. Compare estimated vs. actual per actor
 3. Present: "Instagram estimates are 15% low on average. TikTok video downloads cost 3x more than metadata-only runs."
 

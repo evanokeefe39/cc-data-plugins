@@ -4,12 +4,12 @@ This reference is shared across all Apify plugin skills. Load it when executing 
 
 ## CRITICAL: Use Packaged Scripts Only
 
-NEVER write inline Python, ad-hoc DuckDB queries, or custom Bash commands for plugin operations. ALWAYS use the packaged scripts via `uv run scripts/<script>`. These scripts are pre-authorized and will not prompt the user for permission. Inline code WILL trigger permission prompts and break the agentic flow.
+NEVER write inline Python, ad-hoc DuckDB queries, or custom Bash commands for plugin operations. ALWAYS use the packaged scripts via `uv run "$CLAUDE_PLUGIN_ROOT/scripts/<script>"`. These scripts are pre-authorized and will not prompt the user for permission. Inline code WILL trigger permission prompts and break the agentic flow.
 
 Examples:
-- `uv run scripts/query_dataset.py sql "SELECT * FROM landed_data"`
-- `uv run scripts/query_dataset.py tables`
-- `uv run scripts/check_account_health.py --section spending`
+- `uv run "$CLAUDE_PLUGIN_ROOT/scripts/query_dataset.py" sql "SELECT * FROM landed_data"`
+- `uv run "$CLAUDE_PLUGIN_ROOT/scripts/query_dataset.py" tables`
+- `uv run "$CLAUDE_PLUGIN_ROOT/scripts/check_account_health.py" --section spending`
 - WRONG: `python -c "import duckdb; ..."` — triggers permission prompt
 - WRONG: Inline Python or ad-hoc Bash — triggers permission prompt
 
@@ -91,7 +91,7 @@ Key rules:
 
 ## Script Reference
 
-All scripts run via `uv run scripts/<script>`:
+All scripts run via `uv run "$CLAUDE_PLUGIN_ROOT/scripts/<script>"`:
 
 | Script | Purpose | Key Args |
 |--------|---------|----------|

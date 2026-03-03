@@ -20,7 +20,7 @@ Find the right Apify actor for data extraction needs, especially for platforms a
 
 ## CRITICAL: Packaged Scripts Only
 
-NEVER write inline Python, ad-hoc DuckDB queries, or custom Bash. ALWAYS use `uv run scripts/<script>`. These are pre-authorized — inline code triggers permission prompts and breaks the flow.
+NEVER write inline Python, ad-hoc DuckDB queries, or custom Bash. ALWAYS use `uv run "$CLAUDE_PLUGIN_ROOT/scripts/<script>"`. These are pre-authorized — inline code triggers permission prompts and breaks the flow.
 
 ## Four Gates (mandatory before any dispatch)
 
@@ -93,7 +93,7 @@ For user profile handling, auth setup, and full lifecycle details, see `../share
 
 Query the `_actor_registry` table in DuckDB for matching actors:
 ```
-uv run $CLAUDE_PLUGIN_ROOTscripts/session_start.py --check-registry <query>
+uv run "$CLAUDE_PLUGIN_ROOT/scripts/session_start.py" --check-registry <query>
 ```
 
 If the registry has a match, present it with known parameters and cost estimates.
@@ -155,11 +155,11 @@ These are starting points — always verify actor availability and current statu
 User says: "Can Apify scrape Reddit posts?"
 
 Actions:
-1. Check local registry: `uv run scripts/session_start.py --check-registry reddit`
+1. Check local registry: `uv run "$CLAUDE_PLUGIN_ROOT/scripts/session_start.py" --check-registry reddit`
 2. Registry has `trudax/reddit-scraper` — present actor with known params
 3. User says "Get top 50 posts from r/technology"
 4. Write plan with `searchTerms: ["r/technology"]`, `maxItems: 50`
-5. Run `uv run scripts/estimate_cost.py --plan /tmp/plan.json` — returns `{"total_usd": 0.10, "source": "cached_registry"}`
+5. Run `uv run "$CLAUDE_PLUGIN_ROOT/scripts/estimate_cost.py" --plan /tmp/plan.json` — returns `{"total_usd": 0.10, "source": "cached_registry"}`
 6. Present plan with cost from script, get approval, dispatch
 
 Result: 50 Reddit posts imported to DuckDB

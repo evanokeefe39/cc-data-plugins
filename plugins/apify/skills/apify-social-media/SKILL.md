@@ -20,7 +20,7 @@ Extract posts, profiles, and engagement data from Instagram, TikTok, Twitter/X, 
 
 ## CRITICAL: Packaged Scripts Only
 
-NEVER write inline Python, ad-hoc DuckDB queries, or custom Bash. ALWAYS use `uv run scripts/<script>`. These are pre-authorized — inline code triggers permission prompts and breaks the flow.
+NEVER write inline Python, ad-hoc DuckDB queries, or custom Bash. ALWAYS use `uv run "$CLAUDE_PLUGIN_ROOT/scripts/<script>"`. These are pre-authorized — inline code triggers permission prompts and breaks the flow.
 
 ## Four Gates (mandatory before any dispatch)
 
@@ -90,7 +90,7 @@ For user profile handling, auth setup, and full lifecycle details, see `../share
 
 ## Planning Flow
 
-1. Check existing data first — run `uv run $CLAUDE_PLUGIN_ROOTscripts/query_dataset.py sql "SELECT * FROM landed_data"` to check for relevant data already downloaded. If local data answers the question, query it directly — no scrape needed
+1. Check existing data first — run `uv run "$CLAUDE_PLUGIN_ROOT/scripts/query_dataset.py" sql "SELECT * FROM landed_data"` to check for relevant data already downloaded. If local data answers the question, query it directly — no scrape needed
 2. Identify the target platform and content type from the user's request
 3. Select the correct actor from the actor table (see `references/actor-tables.md`)
 4. Resolve all required parameters — ask the user for any missing inputs (profile URLs, hashtags, search terms)
@@ -142,10 +142,10 @@ For cross-platform "engagement data" requests, note these field differences in t
 User says: "Get me the last 20 posts from @natgeo on Instagram"
 
 Actions:
-1. Check existing data: `uv run scripts/query_dataset.py sql "SELECT * FROM landed_data WHERE source LIKE '%natgeo%'"`
+1. Check existing data: `uv run "$CLAUDE_PLUGIN_ROOT/scripts/query_dataset.py" sql "SELECT * FROM landed_data WHERE source LIKE '%natgeo%'"`
 2. No local data found — select actor `apify/instagram-scraper`
 3. Write plan JSON with `directUrls: ["https://www.instagram.com/natgeo/"]`, `resultsLimit: 20`, `resultsType: "posts"`
-4. Run `uv run scripts/estimate_cost.py --plan /tmp/plan.json` — script returns `{"total_usd": 0.08, "source": "live_api"}`
+4. Run `uv run "$CLAUDE_PLUGIN_ROOT/scripts/estimate_cost.py" --plan /tmp/plan.json` — script returns `{"total_usd": 0.08, "source": "live_api"}`
 5. Present plan: "20 posts from @natgeo, estimated cost ~$0.08 USD, metadata only, local DuckDB. Approve?"
 6. User approves → dispatch via `run_actors.py`
 

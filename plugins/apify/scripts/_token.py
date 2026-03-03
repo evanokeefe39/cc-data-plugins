@@ -5,12 +5,15 @@ from pathlib import Path
 
 
 def _resolve_project_dir() -> Path:
-    """Resolve project directory with multiple fallbacks."""
-    # Prefer explicit env var
+    """Resolve project directory — env var or cwd with .apify_plugin/ check."""
     if env_dir := os.environ.get("CLAUDE_PROJECT_DIR"):
         return Path(env_dir)
-    # Fall back to cwd — works when scripts are invoked from the project root
-    return Path.cwd()
+    cwd = Path.cwd()
+    if (cwd / ".apify_plugin").exists():
+        return cwd
+    # For token resolution, cwd is acceptable even without .apify_plugin
+    # (user may be setting up for the first time)
+    return cwd
 
 
 PROJECT_DIR = _resolve_project_dir()

@@ -1,14 +1,42 @@
-"""Shared debug logger for plugin hooks and scripts.
+"""Shared debug logger and project dir resolution for plugin hooks and scripts.
 
 Writes to .apify_plugin/data/plugin.log in the project directory.
 Set APIFY_PLUGIN_DEBUG=1 to enable, or it's always on if the log file already exists.
 """
 
+import json
 import os
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-PROJECT_DIR = Path(os.environ.get("CLAUDE_PROJECT_DIR", Path.cwd()))
+
+def get_project_dir() -> Path:
+    """Resolve the user's project directory.
+
+    Uses CLAUDE_PROJECT_DIR env var (set by Claude Code for hooks and Bash).
+    Falls back to cwd only if .apify_plugin/ exists there.
+    Exits with a clear error if neither works — prevents silently using
+    the plugin cache dir as the project dir.
+    """
+    env_val = os.environ.get("CLAUDE_PROJECT_DIR")
+    if env_val:
+        return Path(env_val)
+    cwd = Path.cwd()
+    if (cwd / ".apify_plugin").exists():
+        return cwd
+    print(
+        json.dumps({
+            "error": "CLAUDE_PROJECT_DIR not set and .apify_plugin/ not found in cwd",
+            "cwd": str(cwd),
+            "hint": "Run this script from your project directory or set CLAUDE_PROJECT_DIR",
+        }),
+        file=sys.stderr,
+    )
+    sys.exit(1)
+
+
+PROJECT_DIR = get_project_dir()
 LOG_FILE = PROJECT_DIR / ".apify_plugin" / "data" / "plugin.log"
 
 _enabled = None

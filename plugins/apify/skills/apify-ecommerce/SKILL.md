@@ -20,7 +20,7 @@ Extract product listings, prices, reviews, and catalog data from Amazon, Shopify
 
 ## CRITICAL: Packaged Scripts Only
 
-NEVER write inline Python, ad-hoc DuckDB queries, or custom Bash. ALWAYS use `uv run scripts/<script>`. These are pre-authorized — inline code triggers permission prompts and breaks the flow.
+NEVER write inline Python, ad-hoc DuckDB queries, or custom Bash. ALWAYS use `uv run "$CLAUDE_PLUGIN_ROOT/scripts/<script>"`. These are pre-authorized — inline code triggers permission prompts and breaks the flow.
 
 ## Four Gates (mandatory before any dispatch)
 
@@ -89,7 +89,7 @@ For user profile handling, auth setup, and full lifecycle details, see `../share
 
 ## Planning Flow
 
-1. Check existing data first — run `uv run $CLAUDE_PLUGIN_ROOTscripts/query_dataset.py sql "SELECT * FROM landed_data"` before proposing a new scrape
+1. Check existing data first — run `uv run "$CLAUDE_PLUGIN_ROOT/scripts/query_dataset.py" sql "SELECT * FROM landed_data"` before proposing a new scrape
 2. Identify the target platform and data type (products, reviews, prices, search results)
 3. Select the correct actor from the actor table (see `references/actor-tables.md`)
 4. **Check for actor rental requirements** — some e-commerce actors (e.g., `junglee/amazon-crawler`) require a monthly subscription. Warn the user before proceeding
@@ -140,11 +140,11 @@ After download and import (see `../shared/plugin-rules.md` for execution steps):
 User says: "Find the top 50 wireless earbuds on Amazon"
 
 Actions:
-1. Check existing data: `uv run scripts/query_dataset.py sql "SELECT * FROM landed_data WHERE source LIKE '%amazon%'"`
+1. Check existing data: `uv run "$CLAUDE_PLUGIN_ROOT/scripts/query_dataset.py" sql "SELECT * FROM landed_data WHERE source LIKE '%amazon%'"`
 2. No local data — select `junglee/amazon-crawler` with `keyword: "wireless earbuds"`, `maxItems: 50`
 3. Check for rental requirement via Apify API — actor requires rental, warn user
 4. User confirms rental is active
-5. Write plan JSON, run `uv run scripts/estimate_cost.py --plan /tmp/plan.json` — returns `{"total_usd": 0.25, "source": "live_api"}`
+5. Write plan JSON, run `uv run "$CLAUDE_PLUGIN_ROOT/scripts/estimate_cost.py" --plan /tmp/plan.json` — returns `{"total_usd": 0.25, "source": "live_api"}`
 6. Present plan: "50 Amazon results for 'wireless earbuds', ~$0.25 USD, metadata only. Approve?"
 7. User approves → dispatch
 
