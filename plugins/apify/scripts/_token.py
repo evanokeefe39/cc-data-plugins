@@ -5,13 +5,13 @@ from pathlib import Path
 
 
 def _resolve_project_dir() -> Path:
-    """Resolve project directory — env var or cwd with .apify_plugin/ check."""
+    """Resolve project directory — env var or cwd with .apify-plugin/ check."""
     if env_dir := os.environ.get("CLAUDE_PROJECT_DIR"):
         return Path(env_dir)
     cwd = Path.cwd()
-    if (cwd / ".apify_plugin").exists():
+    if (cwd / ".apify-plugin").exists():
         return cwd
-    # For token resolution, cwd is acceptable even without .apify_plugin
+    # For token resolution, cwd is acceptable even without .apify-plugin
     # (user may be setting up for the first time)
     return cwd
 

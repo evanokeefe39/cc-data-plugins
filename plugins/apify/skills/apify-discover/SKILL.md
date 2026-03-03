@@ -159,7 +159,7 @@ Actions:
 2. Registry has `trudax/reddit-scraper` — present actor with known params
 3. User says "Get top 50 posts from r/technology"
 4. Write plan with `searchTerms: ["r/technology"]`, `maxItems: 50`
-5. Run `uv run "$CLAUDE_PLUGIN_ROOT/scripts/estimate_cost.py" --plan /tmp/plan.json` — returns `{"total_usd": 0.10, "source": "cached_registry"}`
+5. Run `uv run "$CLAUDE_PLUGIN_ROOT/scripts/estimate_cost.py" --plan .apify-plugin/plans/plan.json` — returns `{"total_usd": 0.10, "source": "cached_registry"}`
 6. Present plan with cost from script, get approval, dispatch
 
 Result: 50 Reddit posts imported to DuckDB

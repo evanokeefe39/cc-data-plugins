@@ -1,6 +1,6 @@
 """Shared debug logger and project dir resolution for plugin hooks and scripts.
 
-Writes to .apify_plugin/data/plugin.log in the project directory.
+Writes to .apify-plugin/data/plugin.log in the project directory.
 Set APIFY_PLUGIN_DEBUG=1 to enable, or it's always on if the log file already exists.
 """
 
@@ -15,7 +15,7 @@ def get_project_dir() -> Path:
     """Resolve the user's project directory.
 
     Uses CLAUDE_PROJECT_DIR env var (set by Claude Code for hooks and Bash).
-    Falls back to cwd only if .apify_plugin/ exists there.
+    Falls back to cwd only if .apify-plugin/ exists there.
     Exits with a clear error if neither works — prevents silently using
     the plugin cache dir as the project dir.
     """
@@ -23,11 +23,11 @@ def get_project_dir() -> Path:
     if env_val:
         return Path(env_val)
     cwd = Path.cwd()
-    if (cwd / ".apify_plugin").exists():
+    if (cwd / ".apify-plugin").exists():
         return cwd
     print(
         json.dumps({
-            "error": "CLAUDE_PROJECT_DIR not set and .apify_plugin/ not found in cwd",
+            "error": "CLAUDE_PROJECT_DIR not set and .apify-plugin/ not found in cwd",
             "cwd": str(cwd),
             "hint": "Run this script from your project directory or set CLAUDE_PROJECT_DIR",
         }),
@@ -37,7 +37,7 @@ def get_project_dir() -> Path:
 
 
 PROJECT_DIR = get_project_dir()
-LOG_FILE = PROJECT_DIR / ".apify_plugin" / "data" / "plugin.log"
+LOG_FILE = PROJECT_DIR / ".apify-plugin" / "data" / "plugin.log"
 
 _enabled = None
 

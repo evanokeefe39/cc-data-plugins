@@ -153,7 +153,7 @@ Actions:
 2. No local data — select `junglee/amazon-crawler` with `keyword: "wireless earbuds"`, `maxItems: 50`
 3. Check for rental requirement via Apify API — actor requires rental, warn user
 4. User confirms rental is active
-5. Write plan JSON, run `uv run "$CLAUDE_PLUGIN_ROOT/scripts/estimate_cost.py" --plan /tmp/plan.json` — returns `{"total_usd": 0.25, "source": "live_api"}`
+5. Write plan JSON, run `uv run "$CLAUDE_PLUGIN_ROOT/scripts/estimate_cost.py" --plan .apify-plugin/plans/plan.json` — returns `{"total_usd": 0.25, "source": "live_api"}`
 6. Present plan: "50 Amazon results for 'wireless earbuds', ~$0.25 USD, metadata only. Approve?"
 7. User approves → dispatch
 

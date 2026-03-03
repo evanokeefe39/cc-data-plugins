@@ -1,4 +1,4 @@
-.apify_plugin/
+.apify-plugin/
 testing/
 .claude/plugins/apify/config.json
 .claude/plugins/apify/actor_registry.json

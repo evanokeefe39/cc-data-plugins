@@ -148,7 +148,7 @@ User says: "Find coffee shops in Austin, TX"
 
 Actions:
 1. Select `compass/crawler-google-places` with `searchStringsArray: ["coffee shops"]`, `locationQuery: "Austin, TX"`, `maxCrawledPlacesPerSearch: 100`
-2. Write plan JSON, run `uv run "$CLAUDE_PLUGIN_ROOT/scripts/estimate_cost.py" --plan /tmp/plan.json` — returns `{"total_usd": 0.35, "source": "live_api"}`
+2. Write plan JSON, run `uv run "$CLAUDE_PLUGIN_ROOT/scripts/estimate_cost.py" --plan .apify-plugin/plans/plan.json` — returns `{"total_usd": 0.35, "source": "live_api"}`
 3. Present plan: "100 coffee shops in Austin, ~$0.35 USD, metadata only. Approve?"
 4. User approves → dispatch
 

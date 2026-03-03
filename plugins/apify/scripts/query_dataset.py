@@ -24,13 +24,13 @@ def _resolve_project_dir() -> Path:
     if env:
         return Path(env)
     cwd = Path.cwd()
-    if (cwd / ".apify_plugin").exists():
+    if (cwd / ".apify-plugin").exists():
         return cwd
-    print(json.dumps({"error": "CLAUDE_PROJECT_DIR not set and .apify_plugin/ not found in cwd", "cwd": str(cwd)}), file=sys.stderr)
+    print(json.dumps({"error": "CLAUDE_PROJECT_DIR not set and .apify-plugin/ not found in cwd", "cwd": str(cwd)}), file=sys.stderr)
     sys.exit(1)
 
 PROJECT_DIR = _resolve_project_dir()
-DATA_DIR = PROJECT_DIR / ".apify_plugin" / "data"
+DATA_DIR = PROJECT_DIR / ".apify-plugin" / "data"
 DB_PATH = DATA_DIR / "datasets.duckdb"
 
 

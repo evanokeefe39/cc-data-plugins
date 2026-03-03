@@ -2,6 +2,13 @@
 
 This reference is shared across all Apify plugin skills. Load it when executing any extraction workflow.
 
+## CRITICAL: All Files Stay in the Project
+
+ALL plugin artifacts MUST stay under `.apify-plugin/` in the project directory. NEVER write to `/tmp`, the user's home directory, or anywhere outside the project.
+
+- **Plans**: `.apify-plugin/plans/` — plan JSON files (e.g., `.apify-plugin/plans/plan.json`)
+- **Data**: `.apify-plugin/data/` — scraped data, DuckDB database, downloaded media, logs
+
 ## CRITICAL: Use Packaged Scripts Only
 
 NEVER write inline Python, ad-hoc DuckDB queries, or custom Bash commands for plugin operations. ALWAYS use the packaged scripts via `uv run "$CLAUDE_PLUGIN_ROOT/scripts/<script>"`. These scripts are pre-authorized and will not prompt the user for permission. Inline code WILL trigger permission prompts and break the agentic flow.
