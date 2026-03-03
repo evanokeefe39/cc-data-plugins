@@ -18,6 +18,10 @@ metadata:
 
 Extract product listings, prices, reviews, and catalog data from Amazon, Shopify, Walmart, and general e-commerce sites using Apify actors.
 
+## CRITICAL: No Actor Search — Use Hardcoded Actors
+
+Do NOT call the Apify MCP "Search Actors" tool. All e-commerce actors are pre-mapped in the Actor Selection table below. Go directly to actor selection → four-gate flow. The MCP search exists only for the `apify-discover` skill.
+
 ## CRITICAL: Packaged Scripts Only
 
 NEVER write inline Python, ad-hoc DuckDB queries, or custom Bash. ALWAYS use `uv run "$CLAUDE_PLUGIN_ROOT/scripts/<script>"`. These are pre-authorized — inline code triggers permission prompts and breaks the flow.

@@ -2,7 +2,7 @@
   "permissions": {
     "allow": [
       "Bash(uv run *)",
-      "mcp__apify__*"
+      "mcp__plugin_apify_apify__*"
     ]
   }
 }
