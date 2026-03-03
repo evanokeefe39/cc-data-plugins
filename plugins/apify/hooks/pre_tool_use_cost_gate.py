@@ -33,6 +33,8 @@ PLUGIN_SCRIPTS = [
     "fetch_dataset.py",
     "import_dataset.py",
     "check_account_health.py",
+    "save_config.py",
+    "install.py",
 ]
 
 

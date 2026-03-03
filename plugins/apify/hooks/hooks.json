@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "uv run \"$CLAUDE_PLUGIN_ROOT/scripts/session_start.py\"",
+            "command": "uv run \"${CLAUDE_PLUGIN_ROOT}/scripts/session_start.py\"",
             "timeout": 60
           }
         ]
@@ -18,7 +18,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "uv run \"$CLAUDE_PLUGIN_ROOT/hooks/first_run_check.py\"",
+            "command": "uv run \"${CLAUDE_PLUGIN_ROOT}/hooks/first_run_check.py\"",
             "timeout": 10
           }
         ]
@@ -30,7 +30,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "uv run \"$CLAUDE_PLUGIN_ROOT/hooks/pre_tool_use_cost_gate.py\"",
+            "command": "uv run \"${CLAUDE_PLUGIN_ROOT}/hooks/pre_tool_use_cost_gate.py\"",
             "timeout": 15
           }
         ]
@@ -40,11 +40,12 @@
         "hooks": [
           {
             "type": "command",
-            "command": "uv run \"$CLAUDE_PLUGIN_ROOT/hooks/pre_tool_use_cost_gate.py\"",
+            "command": "uv run \"${CLAUDE_PLUGIN_ROOT}/hooks/pre_tool_use_cost_gate.py\"",
             "timeout": 5
           }
         ]
       }
-    ]
+    ],
+    "PermissionRequest": []
   }
 }

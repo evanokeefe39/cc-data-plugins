@@ -14,3 +14,8 @@ Complete Guide to Building Skill For Claude: C:\Users\evano\repos\cc-data-plugin
 - All scripts output JSON to stdout
 - Hook uses exit code 2 to block tool calls
 - Skills use imperative form, third-person descriptions, progressive disclosure
+
+
+## Testing
+
+- We are testing the plugin in ~/repos/apif-test where we have the marketplace installed

@@ -1,7 +1,15 @@
 {
   "permissions": {
     "allow": [
-      "Bash(uv run *)",
+      "Bash(uv run*session_start.py*)",
+      "Bash(uv run*query_dataset.py*)",
+      "Bash(uv run*run_actors.py*)",
+      "Bash(uv run*estimate_cost.py*)",
+      "Bash(uv run*fetch_dataset.py*)",
+      "Bash(uv run*import_dataset.py*)",
+      "Bash(uv run*check_account_health.py*)",
+      "Bash(uv run*save_config.py*)",
+      "Bash(uv run*install.py*)",
       "mcp__plugin_apify_apify__*"
     ]
   }
