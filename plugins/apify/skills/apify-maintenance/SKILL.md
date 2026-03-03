@@ -8,13 +8,55 @@ description: >-
   Apify storage, costs, spending, cleanup, or account maintenance.
   Do NOT use for data extraction — use the domain-specific skills instead.
 version: 0.1.0
+compatibility: "Requires Python 3.11+, uv, and Apify MCP server (@apify/actors-mcp-server)"
+metadata:
+  author: cc-data-plugins
+  mcp-server: apify
 ---
 
 # Apify Maintenance & Account Health
 
 Monitor Apify account health, track spending, manage storage costs, and clean up stale data. This skill covers everything that isn't data extraction — the operational overhead of running Apify jobs.
 
-For lifecycle rules, four-gate enforcement, data handling rules, and script reference, consult `../shared/plugin-rules.md`.
+## CRITICAL: Packaged Scripts Only
+
+NEVER write inline Python, ad-hoc DuckDB queries, or custom Bash. ALWAYS use `uv run scripts/<script>`. These are pre-authorized — inline code triggers permission prompts and breaks the flow.
+
+## Four Gates (mandatory before any dispatch)
+
+All four must pass. Enforced by skill instructions (soft), PreToolUse hook (hard), and script validation (hard).
+
+1. **Params Complete** — All required params resolved, item limit set (`maxItems`/`resultsLimit`/etc.)
+2. **Cost Approved** — `estimate_cost.py` run, estimate presented, user explicitly confirmed
+3. **Scope Decided** — `metadata_only`, `with_media`, or `with_transcripts`
+4. **Destination Set** — `local_duckdb`, `local_files`, `remote`, or `decide_later`
+
+## Cost Estimation — Hard Rule
+
+**NEVER invent, guess, or hallucinate cost numbers.** Run `estimate_cost.py` — it returns costs in **USD**. If you cannot run the script, say so — never fill in placeholder numbers. The word "credits" is wrong — Apify bills in USD.
+
+## Data Handling Rules
+
+- Data NEVER passes through the LLM context — scripts stream to files, import to DuckDB
+- Check existing data BEFORE proposing any new scrape
+- Never auto-delete from Apify — always ask first
+- Retries go through all four gates again (a retry is a new plan)
+
+## Script Reference
+
+| Script | Purpose | Key Args |
+|--------|---------|----------|
+| `session_start.py` | Init, recovery, registry refresh | `--force-refresh`, `--check-registry <query>` |
+| `run_actors.py dispatch` | Dispatch jobs (validates 4 gates) | `--plan <file>` |
+| `run_actors.py poll` | Check running job status | `--run-id <id>` |
+| `estimate_cost.py` | Cost estimate from Apify API | `--plan <file>` |
+| `fetch_dataset.py` | Stream dataset to local files | `--dataset-id <id>`, `--format jsonl\|csv` |
+| `import_dataset.py` | Import into DuckDB | `--file <path>`, `--actor-slug <actor>` |
+| `query_dataset.py sql` | Query DuckDB | `"<SQL>"`, `--limit <n>` |
+| `query_dataset.py tables` | List all DuckDB tables | — |
+| `check_account_health.py` | Storage, spending, diagnostics | `--section all\|account\|storage\|spending` |
+
+For user profile handling, auth setup, and full lifecycle details, see `../shared/plugin-rules.md`.
 
 ## Health Check Flow
 

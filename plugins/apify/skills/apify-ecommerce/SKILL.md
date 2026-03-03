@@ -8,13 +8,84 @@ description: >-
   or product/price/review extraction in the context of data collection.
   Do NOT use for product analysis, price optimization, comparison, or visualization — only for extracting raw product data via Apify.
 version: 0.1.0
+compatibility: "Requires Python 3.11+, uv, and Apify MCP server (@apify/actors-mcp-server)"
+metadata:
+  author: cc-data-plugins
+  mcp-server: apify
 ---
 
 # Apify E-Commerce Extraction
 
 Extract product listings, prices, reviews, and catalog data from Amazon, Shopify, Walmart, and general e-commerce sites using Apify actors.
 
-For lifecycle rules, four-gate enforcement, data handling rules, and script reference, consult `../shared/plugin-rules.md`.
+## CRITICAL: Packaged Scripts Only
+
+NEVER write inline Python, ad-hoc DuckDB queries, or custom Bash. ALWAYS use `uv run scripts/<script>`. These are pre-authorized — inline code triggers permission prompts and breaks the flow.
+
+## Four Gates (mandatory before any dispatch)
+
+All four must pass. Enforced by skill instructions (soft), PreToolUse hook (hard), and script validation (hard).
+
+1. **Params Complete** — All required params resolved, item limit set (`maxItems`/`resultsLimit`/etc.)
+2. **Cost Approved** — `estimate_cost.py` run, estimate presented, user explicitly confirmed
+3. **Scope Decided** — `metadata_only`, `with_media`, or `with_transcripts`
+4. **Destination Set** — `local_duckdb`, `local_files`, `remote`, or `decide_later`
+
+### Plan JSON format
+
+Write to a `.json` file, pass via `--plan <file>`:
+```json
+{
+  "session_id": "abc-123",
+  "user_request": "Get top 50 wireless earbuds on Amazon",
+  "jobs": [
+    {
+      "actor_id": "junglee/amazon-crawler",
+      "input": {
+        "keyword": "wireless earbuds",
+        "maxItems": 50
+      }
+    }
+  ],
+  "cost_approval": {
+    "approved": true,
+    "estimated_cost": 0.25,
+    "timestamp": "2025-01-15T10:30:00Z"
+  },
+  "scope": "metadata_only",
+  "destination": "local_duckdb"
+}
+```
+- `jobs` is a **required array** — never put `actor_id` at top level
+- `cost_approval` must have `approved: true` and `timestamp` (ISO-8601)
+- Actor IDs use **slash notation** — dispatch script auto-converts to tilde
+
+## Cost Estimation — Hard Rule
+
+**NEVER invent, guess, or hallucinate cost numbers.** Run `estimate_cost.py` — it returns costs in **USD**. If you cannot run the script, say so — never fill in placeholder numbers. The word "credits" is wrong — Apify bills in USD.
+
+## Data Handling Rules
+
+- Data NEVER passes through the LLM context — scripts stream to files, import to DuckDB
+- Check existing data BEFORE proposing any new scrape
+- Never auto-delete from Apify — always ask first
+- Retries go through all four gates again (a retry is a new plan)
+
+## Script Reference
+
+| Script | Purpose | Key Args |
+|--------|---------|----------|
+| `session_start.py` | Init, recovery, registry refresh | `--force-refresh`, `--check-registry <query>` |
+| `run_actors.py dispatch` | Dispatch jobs (validates 4 gates) | `--plan <file>` |
+| `run_actors.py poll` | Check running job status | `--run-id <id>` |
+| `estimate_cost.py` | Cost estimate from Apify API | `--plan <file>` |
+| `fetch_dataset.py` | Stream dataset to local files | `--dataset-id <id>`, `--format jsonl\|csv` |
+| `import_dataset.py` | Import into DuckDB | `--file <path>`, `--actor-slug <actor>` |
+| `query_dataset.py sql` | Query DuckDB | `"<SQL>"`, `--limit <n>` |
+| `query_dataset.py tables` | List all DuckDB tables | — |
+| `check_account_health.py` | Storage, spending, diagnostics | `--section all\|account\|storage\|spending` |
+
+For user profile handling, auth setup, and full lifecycle details, see `../shared/plugin-rules.md`.
 
 ## Planning Flow
 
