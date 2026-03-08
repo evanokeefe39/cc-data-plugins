@@ -48,7 +48,7 @@ From the user's request, determine:
 
 ### Step 2 -- Look Up Actor
 
-Read `actors/registry.json` (relative to this skill directory). Match `platform` + `intent` to find the actor entry. Extract `actor_id`, `default_max_items`, and `key_inputs`.
+Match `platform` + `intent` to the actor table below. Do NOT read any files -- the mapping is right here. Default max items is 50 for all actors.
 
 Actor mapping:
 
