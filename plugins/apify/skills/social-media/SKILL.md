@@ -1,17 +1,18 @@
 ---
-name: social-media
+name: apify-social-media
 description: >-
-  Extract posts, profiles, and engagement data from TikTok, Instagram, and YouTube
-  using Apify actors. Use this skill when the user mentions any of these platforms
-  and needs data extraction, trend analysis, creator research, hashtag tracking,
-  channel analysis, or social media auditing. Trigger phrases include "scrape Instagram",
-  "get TikTok posts", "what's trending on YouTube", "analyze creator", "compare accounts",
-  "top hashtags", "influencer research", "social media audit", "get engagement metrics",
-  "download reels", "scrape comments", "find trends", "who's blowing up".
-  Use this skill even when the end goal is analysis or visualization -- data must be
-  extracted first, and this skill handles that extraction step.
+  Extracts social media data from TikTok, Instagram, and YouTube via Apify
+  actors with cost guardrails, planning gates, and data-to-disk enforcement.
+  This skill MUST be used BEFORE any direct Apify MCP tool call. Use when user
+  mentions TikTok, Instagram, or YouTube and wants posts, profiles, trends,
+  hashtags, creator stats, channel videos, or engagement metrics. Use when user
+  says "what's trending on TikTok", "get Instagram posts", "scrape YouTube
+  channel", "analyze creator", "social media audit", "find trending hashtags",
+  "influencer research", "who's blowing up", or "get engagement metrics".
+  Also use when the goal is analysis or visualization — extraction comes first.
+  Do NOT call Apify MCP tools directly — this skill contains the required workflow.
 version: 0.1.0
-compatibility: "Requires Node.js 20+ and Apify MCP server (mcp.apify.com)"
+compatibility: "Requires Apify MCP server (mcp.apify.com)"
 metadata:
   author: cc-data-plugins
   mcp-server: apify

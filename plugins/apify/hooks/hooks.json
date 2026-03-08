@@ -2,11 +2,21 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "mcp__plugin_apify",
+        "matcher": "ToolSearch",
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/block-search-actors.js\"",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/redirect-to-skill.js\"",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "apify",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/block-direct-mcp.js\"",
             "timeout": 5
           }
         ]
