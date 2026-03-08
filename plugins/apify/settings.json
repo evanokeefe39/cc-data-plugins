@@ -6,10 +6,7 @@
       "Bash(cat:.apify/*)",
       "Bash(echo:.apify*)",
       "Bash(node:*)",
-      "mcp__apify__call-actor",
-      "mcp__apify__get-actor-run",
-      "mcp__apify__get-actor-output",
-      "mcp__apify__fetch-actor-details"
+      "mcp__plugin_apify_apify__*"
     ]
   }
 }
