@@ -1,16 +1,10 @@
-## Social Media Intelligence -- Routing Rules
+## Social Media Intelligence -- Mandatory Routing
 
-CRITICAL: Any request to scrape, analyze, research, or retrieve data from TikTok,
-Instagram, or YouTube -- including trends, creators, hashtags, channels, posts, reels,
-or influencer research -- MUST go through the `social-media` skill.
+BEFORE using ANY Apify MCP tool (search-actors, call-actor, fetch-actor-details, get-actor-run, get-actor-output, or any other mcp__plugin_apify_apify__* tool), you MUST first invoke the skill `apify:social-media` using the Skill tool.
 
-Never call Apify MCP tools directly for social media tasks. The skill handles all
-Apify interactions, cost estimation, and data storage.
+This applies to ALL requests mentioning TikTok, Instagram, or YouTube -- including trends, creators, hashtags, channels, posts, reels, influencer research, social media audits, or any social media data task.
 
-Trigger phrases (non-exhaustive): "get trends", "analyze creator", "scrape channel",
-"what's trending", "compare accounts", "who's blowing up", "top hashtags",
-"influencer research", "social media audit", "research [platform] creators",
-"get TikTok posts", "scrape Instagram", "YouTube search".
+DO NOT call any Apify MCP tool directly. DO NOT search for actors. The skill contains hardcoded actor mappings and a mandatory planning gate. Load the skill FIRST, then follow its instructions.
 
 ## Pre-Approved Permissions (never prompt for these)
 
