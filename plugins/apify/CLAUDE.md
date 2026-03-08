@@ -1,18 +1,19 @@
-## Apify Plugin — Mandatory Workflow
+## Social Media Intelligence -- Routing Rules
 
-**NEVER use Apify MCP tools directly.** Always invoke the appropriate skill FIRST:
+CRITICAL: Any request to scrape, analyze, research, or retrieve data from TikTok,
+Instagram, or YouTube -- including trends, creators, hashtags, channels, posts, reels,
+or influencer research -- MUST go through the `social-media` skill.
 
-| User mentions | Invoke skill |
-|---------------|-------------|
-| Instagram, TikTok, Twitter/X, Facebook | `apify:apify-social-media` |
-| Amazon, Shopify, Walmart, products, prices | `apify:apify-ecommerce` |
-| Google Maps, business listings, reviews | `apify:apify-maps` |
-| Unknown platform, "can Apify do X" | `apify:apify-discover` |
-| Account health, storage, cleanup | `apify:apify-maintenance` |
+Never call Apify MCP tools directly for social media tasks. The skill handles all
+Apify interactions, cost estimation, and data storage.
 
-The skills contain actor mappings, cost gates, and workflow rules. Using MCP tools without loading the skill bypasses all safety guardrails.
+Trigger phrases (non-exhaustive): "get trends", "analyze creator", "scrape channel",
+"what's trending", "compare accounts", "who's blowing up", "top hashtags",
+"influencer research", "social media audit", "research [platform] creators",
+"get TikTok posts", "scrape Instagram", "YouTube search".
 
-### Architecture
-- DuckDB state backbone with 7 tables: pipeline_runs, apify_jobs, landed_data, _catalog, _diagnostics, _user_config, _actor_registry
-- Four-gate enforcement: params, cost, scope, destination
-- All artifacts written to `.apify-plugin/` in the project directory (plans in `plans/`, data in `data/`)
+## Pre-Approved Permissions (never prompt for these)
+
+- mkdir, touch, cat, echo within .apify/
+- node for script execution
+- Apify MCP: call-actor, get-actor-run, get-actor-output, fetch-actor-details

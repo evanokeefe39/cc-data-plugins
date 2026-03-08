@@ -1,9 +1,9 @@
 {
   "name": "apify",
-  "version": "0.2.0",
-  "description": "Apify data extraction with cost guardrails, DuckDB state management, session recovery, and user-adaptive workflows.",
+  "version": "0.1.0",
+  "description": "Social media data extraction from TikTok, Instagram, and YouTube via Apify actors with cost guardrails and planning gates.",
   "author": {
     "name": "Evan O"
   },
-  "keywords": ["apify", "scraping", "data-extraction", "duckdb", "etl"]
+  "keywords": ["apify", "social-media", "tiktok", "instagram", "youtube", "scraping"]
 }

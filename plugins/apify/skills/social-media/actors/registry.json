@@ -1,0 +1,43 @@
+{
+  "tiktok": {
+    "posts": {
+      "actor_id": "clockworks/tiktok-scraper",
+      "default_max_items": 50,
+      "key_inputs": ["hashtags", "searchQueries", "profiles", "postURLs"]
+    },
+    "profile": {
+      "actor_id": "clockworks/tiktok-profile-scraper",
+      "default_max_items": 50,
+      "key_inputs": ["profiles"]
+    }
+  },
+  "instagram": {
+    "posts": {
+      "actor_id": "apify/instagram-post-scraper",
+      "default_max_items": 50,
+      "key_inputs": ["username"]
+    },
+    "profile": {
+      "actor_id": "apify/instagram-profile-scraper",
+      "default_max_items": 50,
+      "key_inputs": ["usernames"]
+    },
+    "general": {
+      "actor_id": "apify/instagram-scraper",
+      "default_max_items": 50,
+      "key_inputs": ["directUrls", "search", "searchType"]
+    }
+  },
+  "youtube": {
+    "channel": {
+      "actor_id": "streamers/youtube-channel-scraper",
+      "default_max_items": 50,
+      "key_inputs": ["startUrls"]
+    },
+    "search": {
+      "actor_id": "streamers/youtube-scraper",
+      "default_max_items": 50,
+      "key_inputs": ["searchKeywords", "startUrls"]
+    }
+  }
+}

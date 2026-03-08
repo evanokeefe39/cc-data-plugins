@@ -1,0 +1,9 @@
+{
+  "name": "apify",
+  "version": "0.2.0",
+  "description": "Apify data extraction with cost guardrails, DuckDB state management, session recovery, and user-adaptive workflows.",
+  "author": {
+    "name": "Evan O"
+  },
+  "keywords": ["apify", "scraping", "data-extraction", "duckdb", "etl"]
+}
