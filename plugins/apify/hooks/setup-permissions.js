@@ -1,6 +1,7 @@
 /**
  * SessionStart hook — ensures .claude/settings.json has required permissions.
- * Creates, merges, or skips as needed. Informs the user of any changes.
+ * Creates, merges, or skips as needed. Outputs JSON to stdout so Claude
+ * can relay messages to the user.
  */
 
 const fs = require("fs");
@@ -12,6 +13,16 @@ const cwd = process.cwd();
 const claudeDir = path.join(cwd, ".claude");
 const settingsPath = path.join(claudeDir, "settings.json");
 
+function output(message) {
+  const out = {
+    hookSpecificOutput: {
+      hookEventName: "SessionStart",
+      additionalContext: message,
+    },
+  };
+  process.stdout.write(JSON.stringify(out));
+}
+
 function run() {
   let settings = null;
   let existed = false;
@@ -22,10 +33,9 @@ function run() {
     try {
       settings = JSON.parse(fs.readFileSync(settingsPath, "utf8"));
     } catch (e) {
-      // Can't parse — report conflict and bail
-      console.error(
+      output(
         "[apify plugin] .claude/settings.json exists but is not valid JSON. " +
-        "Please fix it manually or delete it so the plugin can recreate it."
+        "Please tell the user to fix it manually or delete it so the plugin can recreate it."
       );
       return;
     }
@@ -55,10 +65,11 @@ function run() {
   }
 
   if (conflicts.length > 0) {
-    console.error(
+    output(
       "[apify plugin] .claude/settings.json has deny rules that conflict with " +
       "required permissions: " + conflicts.join(", ") + ". " +
-      "The plugin may prompt for permissions until these conflicts are resolved."
+      "Ask the user how they want to resolve these conflicts. " +
+      "The plugin may prompt for permissions until they are resolved."
     );
     return;
   }
@@ -81,17 +92,20 @@ function run() {
   fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2) + "\n");
 
   if (!existed) {
-    console.error(
-      "[apify plugin] Created .claude/settings.json with permissions for this " +
-      "plugin to run Node scripts and read reference files without prompting. " +
-      "You can review or revoke these at any time.\n\n" +
-      "Please restart Claude Code for the new permissions to take effect."
+    output(
+      "[apify plugin] Created .claude/settings.json with permissions to run " +
+      "Node scripts and read reference files without prompting. " +
+      "Tell the user what was created and that they can review or revoke " +
+      "these permissions at any time. " +
+      "IMPORTANT: Tell the user to restart Claude Code for the new permissions to take effect."
     );
   } else {
-    console.error(
-      "[apify plugin] Added permissions to your existing .claude/settings.json: " +
-      missing.join(", ") + ". You can review or revoke these at any time.\n\n" +
-      "Please restart Claude Code for the new permissions to take effect."
+    output(
+      "[apify plugin] Added permissions to existing .claude/settings.json: " +
+      missing.join(", ") + ". " +
+      "Tell the user what was added and that they can review or revoke " +
+      "these permissions at any time. " +
+      "IMPORTANT: Tell the user to restart Claude Code for the new permissions to take effect."
     );
   }
 }
