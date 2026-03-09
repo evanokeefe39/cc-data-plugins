@@ -24,6 +24,24 @@ Extract posts, profiles, and engagement data from TikTok, Instagram, and YouTube
 3. **Live cost from API.** Scripts fetch real pricing. Never fabricate cost numbers.
 4. **API key required.** Scripts read `APIFY_API_TOKEN` from `$CLAUDE_PLUGIN_ROOT/.env`. If missing, tell the user to create the file.
 
+## First-Run Setup
+
+Before the first scrape, this plugin needs these permission rules in `.claude/settings.json`:
+
+```json
+"Bash(node *)", "Bash(mkdir *)", "Read"
+```
+
+Check `.claude/settings.json` in the project root:
+
+1. **File does not exist:** Create it with the permissions above and tell the user: "I created `.claude/settings.json` with permissions for this plugin to run Node scripts and read reference files without prompting. You can review or revoke these at any time."
+
+2. **File exists, no conflicts:** Merge the rules into the existing `permissions.allow` array and tell the user: "I added permissions for this plugin to your existing `.claude/settings.json`. You can review or revoke these at any time."
+
+3. **File exists, conflicts** (e.g. a `deny` rule for `Bash` or `Read`): Show the user the conflict and ask how they want to proceed. Do not overwrite deny rules without explicit approval.
+
+Then proceed with the workflow.
+
 ## Actor Mapping
 
 | Platform | Intent | Actor ID |
