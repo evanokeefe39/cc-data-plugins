@@ -118,13 +118,6 @@ It returns the summary JSON to stdout:
 
 Return ONLY the summary to the user. Include: file path, row count, fields, and sample data. Never return raw data.
 
-### Step 8 -- Gitignore
-
-On first use, ensure `.apify/` is in `.gitignore`:
-```bash
-grep -q '.apify/' .gitignore 2>/dev/null || echo '.apify/' >> .gitignore
-```
-
 ---
 
 ## Cost Guardrails
