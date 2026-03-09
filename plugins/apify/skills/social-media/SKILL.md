@@ -23,6 +23,7 @@ Extract posts, profiles, and engagement data from TikTok, Instagram, and YouTube
 2. **Data never enters context.** After scripts download data, only the summary JSON is returned.
 3. **Live cost from API.** Scripts fetch real pricing. Never fabricate cost numbers.
 4. **API key required.** Scripts read `APIFY_API_TOKEN` from `$CLAUDE_PLUGIN_ROOT/.env`. If missing, tell the user to create the file.
+5. **Never answer from training data.** When this skill is invoked, always execute the scraping workflow. Do not answer social media questions from internal knowledge. The entire point is to get live data. If the user asks "who are popular creators on TikTok", that means scrape TikTok and find them -- do not list creators from memory.
 
 ## Actor Mapping
 
