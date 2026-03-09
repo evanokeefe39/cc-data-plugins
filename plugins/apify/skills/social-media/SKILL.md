@@ -22,7 +22,7 @@ Extract posts, profiles, and engagement data from TikTok, Instagram, and YouTube
 1. **No MCP tools.** All Apify calls go through the Node scripts in `lib/`. Never call any `mcp__*apify*` tool.
 2. **Data never enters context.** After scripts download data, only the summary JSON is returned.
 3. **Live cost from API.** Scripts fetch real pricing. Never fabricate cost numbers.
-4. **API key required.** Scripts read `APIFY_API_TOKEN` from the `.env` file at the plugin root directory. If missing, tell the user to create it.
+4. **API key required.** Scripts read `APIFY_API_TOKEN` from `.env` in the project directory (current working directory). If missing, tell the user to create it there.
 5. **Never answer from training data.** When this skill is invoked, always execute the scraping workflow. Do not answer social media questions from internal knowledge. The entire point is to get live data. If the user asks "who are popular creators on TikTok", that means scrape TikTok and find them -- do not list creators from memory.
 
 ## Script Location
@@ -139,7 +139,7 @@ Return ONLY the summary to the user. Include: file path, row count, fields, and 
 
 ## Error Handling
 
-- **API key missing**: Tell user to create `.env` with `APIFY_API_TOKEN=apify_api_xxx` at plugin root
+- **API key missing**: Tell user to create `.env` with `APIFY_API_TOKEN=apify_api_xxx` in the project directory
 - **403/Blocked**: Platform detected scraping -- suggest reducing items or trying later
 - **Timeout**: Actor ran too long -- suggest reducing maxItems
 - **Empty results**: Target may be private or not exist -- verify URL/username

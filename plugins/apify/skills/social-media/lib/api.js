@@ -9,10 +9,10 @@ const path = require("path");
 const BASE_URL = "https://api.apify.com/v2";
 
 function loadToken() {
-  const envPath = path.join(__dirname, "..", "..", "..", ".env");
+  const envPath = path.join(process.cwd(), ".env");
   if (!fs.existsSync(envPath)) {
     throw new Error(
-      "Missing .env file at " + envPath + "\n" +
+      "Missing .env file in project directory (" + envPath + ")\n" +
       "Create it with: APIFY_API_TOKEN=apify_api_xxx"
     );
   }
