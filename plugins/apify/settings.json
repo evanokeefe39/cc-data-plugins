@@ -1,11 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(node:*)",
-      "Bash(mkdir:*)",
-      "Read(*)",
+      "Bash(node *)",
+      "Bash(mkdir *)",
+      "Read",
       "Edit(.gitignore)",
-      "Write(.apify/*)"
+      "Write(.apify/**)"
     ]
   }
 }
