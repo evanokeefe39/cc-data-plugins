@@ -6,17 +6,17 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/redirect-to-skill.js\"",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/block-all-apify-mcp.js\"",
             "timeout": 5
           }
         ]
       },
       {
-        "matcher": "apify",
+        "matcher": "mcp__",
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/block-direct-mcp.js\"",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/block-all-apify-mcp.js\"",
             "timeout": 5
           }
         ]

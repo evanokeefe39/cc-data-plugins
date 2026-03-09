@@ -1,6 +1,6 @@
 # Social Media Actor Reference Tables
 
-> Cost data: Never use hardcoded cost estimates. Always call `mcp__apify__fetch-actor-details` to get real pricing from the Apify API before presenting cost to the user. If no pricing info is returned, state "cost unknown".
+> Cost data: Never use hardcoded cost estimates. Run `node lib/cost.js <actor_id> <max_items>` to get real pricing from the Apify API. If it returns null, state "cost unknown".
 
 ## TikTok
 

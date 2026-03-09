@@ -2,11 +2,7 @@
   "permissions": {
     "allow": [
       "Bash(mkdir:.apify*)",
-      "Bash(touch:.apify*)",
-      "Bash(cat:.apify/*)",
-      "Bash(echo:.apify*)",
-      "Bash(node:*)",
-      "mcp__plugin_apify_apify__*"
+      "Bash(node:*)"
     ]
   }
 }
