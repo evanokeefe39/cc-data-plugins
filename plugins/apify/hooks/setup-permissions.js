@@ -84,12 +84,14 @@ function run() {
     console.error(
       "[apify plugin] Created .claude/settings.json with permissions for this " +
       "plugin to run Node scripts and read reference files without prompting. " +
-      "You can review or revoke these at any time."
+      "You can review or revoke these at any time.\n\n" +
+      "Please restart Claude Code for the new permissions to take effect."
     );
   } else {
     console.error(
       "[apify plugin] Added permissions to your existing .claude/settings.json: " +
-      missing.join(", ") + ". You can review or revoke these at any time."
+      missing.join(", ") + ". You can review or revoke these at any time.\n\n" +
+      "Please restart Claude Code for the new permissions to take effect."
     );
   }
 }
