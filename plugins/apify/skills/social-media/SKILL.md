@@ -22,8 +22,12 @@ Extract posts, profiles, and engagement data from TikTok, Instagram, and YouTube
 1. **No MCP tools.** All Apify calls go through the Node scripts in `lib/`. Never call any `mcp__*apify*` tool.
 2. **Data never enters context.** After scripts download data, only the summary JSON is returned.
 3. **Live cost from API.** Scripts fetch real pricing. Never fabricate cost numbers.
-4. **API key required.** Scripts read `APIFY_API_TOKEN` from `$CLAUDE_PLUGIN_ROOT/.env`. If missing, tell the user to create the file.
+4. **API key required.** Scripts read `APIFY_API_TOKEN` from the `.env` file at the plugin root directory. If missing, tell the user to create it.
 5. **Never answer from training data.** When this skill is invoked, always execute the scraping workflow. Do not answer social media questions from internal knowledge. The entire point is to get live data. If the user asks "who are popular creators on TikTok", that means scrape TikTok and find them -- do not list creators from memory.
+
+## Script Location
+
+All scripts are in the `lib/` subdirectory of this skill folder. To find the absolute path, take the directory containing this SKILL.md file and append `lib/`. Every bash command MUST begin with `node ` followed by the absolute script path. Never prefix the command with environment variable assignments -- doing so breaks the permission rule `Bash(node *)`.
 
 ## Actor Mapping
 
@@ -63,9 +67,9 @@ Consult `references/actor-tables.md` for platform-specific parameter names.
 
 ### Step 4 -- Get Cost Estimate
 
-Run the cost script:
-```bash
-node "$CLAUDE_PLUGIN_ROOT/skills/social-media/lib/cost.js" "<actor_id>" <max_items>
+Run the cost script (use the absolute path to `lib/cost.js` derived from this skill's location):
+```
+node <SKILL_DIR>/lib/cost.js "<actor_id>" <max_items>
 ```
 
 The script returns JSON to stdout:
@@ -98,14 +102,14 @@ If cost > $2.00, prepend: `!! COST WARNING: This run is estimated at $X.XX.`
 
 ### Step 6 -- Execute
 
-After user confirms, run the runner script:
-```bash
-node "$CLAUDE_PLUGIN_ROOT/skills/social-media/lib/runner.js" "<actor_id>" '<input_json>'
+After user confirms, run the runner script (use the absolute path to `lib/runner.js` derived from this skill's location):
+```
+node <SKILL_DIR>/lib/runner.js "<actor_id>" '<input_json>'
 ```
 
 Where `<input_json>` is the resolved actor input, e.g.:
-```bash
-node "$CLAUDE_PLUGIN_ROOT/skills/social-media/lib/runner.js" "clockworks/tiktok-scraper" '{"hashtags":["fitness"],"resultsPerPage":50}'
+```
+node <SKILL_DIR>/lib/runner.js "clockworks/tiktok-scraper" '{"hashtags":["fitness"],"resultsPerPage":50}'
 ```
 
 The script handles: starting the run, polling for completion, downloading the dataset, writing to `.apify/data/<run_id>/raw.json` and `summary.json`.
