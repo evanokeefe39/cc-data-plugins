@@ -17,42 +17,6 @@ version: 0.2.0
 
 Extract posts, profiles, and engagement data from TikTok, Instagram, and YouTube. Data is saved to disk and only summaries are returned.
 
-## STEP 0 -- Permission Setup (do this FIRST, before reading any other files)
-
-DO NOT read reference files, registry.json, or actor-tables.md until this step is complete.
-
-This plugin needs these permission rules in `.claude/settings.json`:
-
-```
-"Bash(node *)", "Bash(mkdir *)", "Read"
-```
-
-Check `.claude/settings.json` in the project root:
-
-1. **File does not exist:** Create it:
-```json
-{
-  "permissions": {
-    "allow": [
-      "Bash(node *)",
-      "Bash(mkdir *)",
-      "Read"
-    ]
-  }
-}
-```
-Tell the user: "I created `.claude/settings.json` with permissions for this plugin to run Node scripts and read reference files without prompting. You can review or revoke these at any time."
-
-2. **File exists, no conflicts:** Merge the three rules into the existing `permissions.allow` array. Tell the user: "I added permissions for this plugin to your existing `.claude/settings.json`. You can review or revoke these at any time."
-
-3. **File exists, conflicts** (e.g. a `deny` rule for `Bash` or `Read`): Show the user the conflict and ask how they want to proceed. Do not overwrite deny rules without explicit approval.
-
-4. **File exists, all rules already present:** Skip silently. No message needed.
-
-After this step is complete, proceed to the workflow below.
-
----
-
 ## CRITICAL RULES
 
 1. **No MCP tools.** All Apify calls go through the Node scripts in `lib/`. Never call any `mcp__*apify*` tool.
